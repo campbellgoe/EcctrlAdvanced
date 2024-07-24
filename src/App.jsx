@@ -1,12 +1,12 @@
 // import all neccesary code for the App
 import { Canvas } from '@react-three/fiber'
 import { Physics, CuboidCollider } from '@react-three/rapier'
-import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU } from '@react-three/drei'
+import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
 import LevelLightsAndExtras from '@/LevelLightsAndExtras.jsx'
-
+import { RigidBody } from '@react-three/rapier';
 import { useInView } from 'react-intersection-observer'
 import { Respawn, DisableRender } from '@/utils'
 
@@ -22,7 +22,7 @@ import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 import { BackSide } from 'three'
 
-import BaseCharacter from '@/components/models/BaseCharacter'
+import BaseCharacter from '@/components/BaseCharacter'
 import { femalePlayerScale, basePlayerScale } from '@/consts'
 
 import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
@@ -45,7 +45,7 @@ export default function AppMain({ overrideLevel = null }) {
 
 const MyEnvironmentSphere = () => {
   const envSphereProps = useTexture({
-    map: 'environment.png',
+    map: 'night.png',
   })
   return <Sphere scale={700}>
     <meshBasicMaterial {...envSphereProps} side={BackSide} />
@@ -56,8 +56,8 @@ export const EcctrlContainer = forwardRef(({ ecctrlProps, pos, characterURL, ani
 return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={pos} jumpVel={0}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
     <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
-    {/* <Box args={[0.5, 1,0.2]} position-y={-yDist} />  */}
-    <BaseCharacter character={character} position-y={-0.65 - yDist} scale={character === 'female' ? femalePlayerScale : basePlayerScale}/>
+    <Box args={[0.5, 1,0.2]} position-y={-yDist} />
+    <BaseCharacter position-y={-0.65 - yDist} scale={1}/>
   </EcctrlAnimation>
 </Ecctrl>
 })
@@ -76,8 +76,8 @@ function App({ overrideLevel = null }) {
     { name: 'run', keys: ['Shift'] },
     { name: 'action1', keys: ['1'] },
     { name: 'action2', keys: ['2'] },
-    // { name: 'action3', keys: ['3'] },
-    // { name: 'action4', keys: ['KeyF'] }
+    { name: 'action3', keys: ['3'] },
+    { name: 'action4', keys: ['KeyF'] }
   ]
 
 
@@ -86,18 +86,17 @@ function App({ overrideLevel = null }) {
    */
 
   const animationSet = {
-    idle: 'Idel',
-    walk: 'Walking',
-    run: 'running',
-    //moonwalk :)
-    jump: 'Idel',
-    jumpIdle: 'Idel',
-    jumpLand: 'Idel',
-    fall: 'Idel', // This is for falling from high sky
-    action1: 'Talking',
-    action2: 'Talking 2',
-    // action3: 'CharacterArmature|HitReact',
-    // action4: 'CharacterArmature|Punch'
+    idle: 'CharacterArmature|Idle',
+    walk: 'CharacterArmature|Walk',
+    run: 'CharacterArmature|Run',
+    jump: 'CharacterArmature|Jump',
+    jumpIdle: 'CharacterArmature|Jump_Idle',
+    jumpLand: 'CharacterArmature|Jump_Land',
+    fall: 'CharacterArmature|Duck', // This is for falling from high sky
+    action1: 'CharacterArmature|Wave',
+    action2: 'CharacterArmature|Death',
+    action3: 'CharacterArmature|HitReact',
+    action4: 'CharacterArmature|Punch'
   }
   // shows the keyboard controls legend
   const [showControls, setShowControls] = useState(false)
@@ -109,7 +108,7 @@ function App({ overrideLevel = null }) {
   const { state: ephemeralState, dispatch: ephemeralDispatch } = ephemeralStateDispatch
   const { ref, inView } = useInView()
   const level = state.level || INTRO
-  console.log('level', level)
+
   const setLevel = newLevel => dispatch({ type: 'SET_LEVEL', payload: { level: newLevel } })
   const character = state.character
   // const setCharacter = character => dispatch({ type: 'SET_CHARACTER', character })
@@ -120,8 +119,7 @@ function App({ overrideLevel = null }) {
       const map ={
         undefined: '',
         '': '',
-        'male': './characters/Animated/Character0-transformed.glb',
-        'female': './characters/Animated/Character0-transformed.glb',
+        'demon': './Demon-packed.glb',
       }
       if(!(character in map)) throw new Error(`Character ${character} not found in character map`)
       return map[character]
@@ -154,9 +152,9 @@ function App({ overrideLevel = null }) {
     [INTRO]: {
       type: ECCTRL,
       // uses introStartPosition or the player position from the previous level
-      position: calculatePosition(introStartPosition),
-      respawnPosition: introStartPosition,
-      minY: 0,
+      position: [0,15,0],//calculatePosition(introStartPosition),
+      respawnPosition: [0,15,0],//introStartPosition,
+      minY: -10,
       hasPointerLock: true,
     },
   }
@@ -164,21 +162,25 @@ function App({ overrideLevel = null }) {
   const currentLevelData = levelData[level]
 
 
-  // intro level is used for multiple levels, intro, registering, registered
+  // intro level is used for multiple levels
   // here's the jsx to share for that
  const LEVELS = {
-  INTRO: {
+  [INTRO]: {
     Key: 'INTRO',
-    Value: null
+    Value: <>
+    <RigidBody colliders="trimesh" type="fixed" ccd mass={0}>
+      <Box args={[10,1,10]} color={0xff9966} />
+      </RigidBody>
+    </>
   }
  }
  const levels = {
-  [INTRO]: null
+  [INTRO]: LEVELS[INTRO].Value
  }
   // TODO: these controls can be removed in the final version
   const [{ lvl, resetGameSaveData }, set] = useControls(() => ({
     lvl: level,
-    levels: { value: LEVELS.INTRO.Key },
+    levels: { value: LEVELS[INTRO].Key },
     resetGameSaveData: false
   }))
 
@@ -219,7 +221,7 @@ function App({ overrideLevel = null }) {
       setLevel(lvl)
     }
   }, [lvl])
-  const yDist = 0.35
+  const yDist =0.5
   const ecctrlProps = {
     capsuleRadius: yDist,
     floatHeight: yDist,
@@ -243,7 +245,7 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
   const ecctrlJoystickRef = useRef()
 
 
-  const showJoystick = currentLevelData.type === ECCTRL && !uiLocked && !game
+  const showJoystick = currentLevelData.type === ECCTRL
   const loadingJsx = <div>Loading...</div>
 
   const GPUTier = useDetectGPU()
@@ -273,7 +275,7 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
             >
               {!inView && <DisableRender />}
               <Perf position="top-left" minimal />
-              <Suspense fallback={<MyEnvironmentSphere />}><Environment background files="/environment.exr" /></Suspense>
+              <Suspense fallback={<MyEnvironmentSphere />}>{<Environment background files="/night.hdr" />}</Suspense>
               <LevelLightsAndExtras level={level} />
               {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
                 <Physics timeStep="vary">
@@ -283,7 +285,7 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
                 </Physics>
               </Suspense>}
               {currentLevelData.type === NO_PLAYER && <Suspense fallback={null}>{levels[level]}</Suspense>}
-              {isMobile && <MyEnvironmentSphere />}
+              {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
             </Canvas>
            

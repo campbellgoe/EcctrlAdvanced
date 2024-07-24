@@ -1,39 +1,16 @@
 "use client"
 import React, { useEffect, createContext, useContext, useReducer} from 'react';
-export const localStorageKey = 'stamp-quest-offshore_0.0.0_local-state'
-import { CHARACTER_SELECT } from '@/consts.js'
+import { INTRO } from '@/consts';
+export const localStorageKey = 'ecctrl-advanced-game-engine_0.0.0_local-state'
 // type StateType = {
 // }
 // type StateProps = {
 //   state: StateType,
 //   dispatch: any
 // }
-const initialTokensCollected = [
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false
-]
-const initialLearningOpportunitiesTokens = 3
 export const persistentInitialState = {
-  
   level: INTRO,
-  // male or female
-  character: '',
-  name: '',
-  email: '',
-  oilrig: {
-    tokensCollected: initialTokensCollected
-  },
-  learningOpportunities: {
-    initialTokens: initialLearningOpportunitiesTokens,
-    remainingTokens: initialLearningOpportunitiesTokens,
-    selectedCells: [],
-  }
+  character: 'demon',
 }
 
 // type ActionType = {
@@ -43,13 +20,6 @@ export const persistentInitialState = {
 
 export const PersistentAppReducer = (state, action) => {
   switch (action.type){
-    case "COLLECT_TOKEN": {
-      console.log('collecting token', action.index)
-      // TODO: would be nicer to use the token names e.g. engagement instead of indexes
-      const newTokens = [...(state?.oilrig?.tokensCollected || initialTokensCollected)]
-      newTokens[action.index] = true
-      return {...state, oilrig: {...state.oilrig, tokensCollected: newTokens } }
-    }
     case "INIT_STATE": {
       console.log('loading data', action.payload)
       return action.payload
@@ -63,24 +33,6 @@ export const PersistentAppReducer = (state, action) => {
     }
     case "SET_CHARACTER": {
       return {...state, character: action.character }
-    }
-    case "SET_EMAIL": {
-      return {...state, email: action.email }
-    }
-    case "SET_NAME": {
-      return {...state, name: action.name }
-    }
-    case "SET_LO_REMAINING_TOKENS": {
-      return {
-        ...state,
-        learningOpportunities: {...state.learningOpportunities, remainingTokens: action.remainingTokens }
-      }
-    }
-    case "SET_LO_SELECTED_CELLS": {
-      return {
-        ...state,
-        learningOpportunities: {...state.learningOpportunities, selectedCells: action.selectedCells }
-      }
     }
     default: {
       alert("unhandled reducer action type"+action.type)

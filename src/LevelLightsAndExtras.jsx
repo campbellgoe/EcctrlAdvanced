@@ -1,4 +1,4 @@
-import { CHARACTER_SELECT, INTRO, REGISTERING, REGISTERED, OCEAN, OILRIG } from '@/consts.js'
+import { INTRO } from '@/consts.js'
 export default function LevelExtras({ level }) {
   const introJsx = <>
   <hemisphereLight
@@ -6,17 +6,7 @@ export default function LevelExtras({ level }) {
     />
   </>
   const data = {
-    [CHARACTER_SELECT]: introJsx,
     [INTRO]: introJsx,
-    [REGISTERING]: introJsx,
-    [REGISTERED]: introJsx,
-    [OCEAN]: introJsx,
-    [OILRIG]: <>
-    <hemisphereLight
-    args={[ 'white', 0x000066, Math.PI * 0.33]}
-    />
-    {/* <fogExp2 attach="fog" color={0x948f8e} density={0.0006} /> */}
-    </>
   }
   return (
     <>
