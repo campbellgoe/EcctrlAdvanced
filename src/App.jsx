@@ -226,6 +226,10 @@ function App({ overrideLevel = null }) {
   const ecctrlProps = {
     capsuleRadius: yDist,
     floatHeight: yDist,
+    camInitDis: -5,
+  camMaxDis: -50,
+  camMinDis: -2,
+  camZoomSpeed: 4,
   }
   const ecctrlContainerProps = {
     ecctrlProps, pos, characterURL, animationSet, yDist, character
