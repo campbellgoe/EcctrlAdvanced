@@ -20,7 +20,7 @@ import { isMobile } from 'react-device-detect';
 import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 
-import { BackSide } from 'three'
+import { BackSide, MeshStandardMaterial } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
 import { femalePlayerScale, basePlayerScale } from '@/consts'
@@ -53,10 +53,10 @@ const MyEnvironmentSphere = () => {
 }
 export const EcctrlContainer = forwardRef(({ ecctrlProps, pos, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
-return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={pos} jumpVel={0}>
+return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={pos} jumpVel={9.4}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
-    <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
-    <Box args={[0.5, 1,0.2]} position-y={-yDist} />
+    {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
+    <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}
     <BaseCharacter position-y={-0.65 - yDist} scale={1}/>
   </EcctrlAnimation>
 </Ecctrl>
@@ -119,7 +119,7 @@ function App({ overrideLevel = null }) {
       const map ={
         undefined: '',
         '': '',
-        'demon': './Demon-packed.glb',
+        'demon': './Demon-transformed.glb',
       }
       if(!(character in map)) throw new Error(`Character ${character} not found in character map`)
       return map[character]
@@ -164,12 +164,13 @@ function App({ overrideLevel = null }) {
 
   // intro level is used for multiple levels
   // here's the jsx to share for that
+  const mat = useMemo(() => new MeshStandardMaterial(0xff9966))
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
     Value: <>
     <RigidBody colliders="trimesh" type="fixed" ccd mass={0}>
-      <Box args={[10,1,10]} color={0xff9966} />
+      <Box args={[10,1,10]} material={mat} receiveShadow={true} />
       </RigidBody>
     </>
   }
@@ -221,7 +222,7 @@ function App({ overrideLevel = null }) {
       setLevel(lvl)
     }
   }, [lvl])
-  const yDist =0.5
+  const yDist = 0.35
   const ecctrlProps = {
     capsuleRadius: yDist,
     floatHeight: yDist,
@@ -249,7 +250,7 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
   const loadingJsx = <div>Loading...</div>
 
   const GPUTier = useDetectGPU()
-  const tier = (GPUTier.tier === "0" || GPUTier.isMobile)
+  const tier = (GPUTier.tier < 4  || GPUTier.isMobile)
   const effectsJsx = tier ? null : <EffectComposer>
   <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} />
   
