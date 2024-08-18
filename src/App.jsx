@@ -6,7 +6,7 @@ import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
 import LevelLightsAndExtras from '@/LevelLightsAndExtras.jsx'
-import { RigidBody } from '@react-three/rapier';
+
 import { useInView } from 'react-intersection-observer'
 import { Respawn, DisableRender } from '@/utils'
 
@@ -28,6 +28,7 @@ import { femalePlayerScale, basePlayerScale } from '@/consts'
 import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from 'clsx'
+import Level0 from './components/Level0'
 // wrap app in context for accessing persistent state such as level and selected character
 const errorBoundaryJsx = <div className="p-8">
 <h1 className="text-3xl text-red-950 bg-red-300">⚠️Something went wrong.</h1>
@@ -164,15 +165,12 @@ function App({ overrideLevel = null }) {
 
   // intro level is used for multiple levels
   // here's the jsx to share for that
-  const mat = useMemo(() => new MeshStandardMaterial(0xff9966))
+  
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
-    Value: <>
-    <RigidBody colliders="trimesh" type="fixed" ccd mass={0}>
-      <Box args={[10,1,10]} material={mat} receiveShadow={true} />
-      </RigidBody>
-    </>
+    Value: <Level0 
+    floorColor={0x5d1122} />
   }
  }
  const levels = {
