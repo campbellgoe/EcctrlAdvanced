@@ -17,34 +17,62 @@ function InstancedLevel({ floorColor, instances, count, cellSize }){
           </instancedMesh>
       </InstancedRigidBodies>
 }
-function Level0({ floorColor }) {
-  let cellSize = 10
-  const map = useMemo(() => [
-    [0, 1, 0],
-    [0,1,0],
-    [1,1,1]
-  ], []);
-  let [gridWidth, gridDepth] = useMemo(() => [3, 3], [])
-  // this count might need to changes if the map contains more than 1s
-  const count = useMemo(() => map.reduce((acc, row) => acc + row.reduce((acc, value) => acc + value, 0), 0), [map])
-  const instances = useMemo(() => {
+export const CELL_SIZE = 10
+const cellSize = CELL_SIZE
+export const MAPS = {
+  MAP_0: [
+    [1, 1, 1, 1, 1, 1],
+    [1,1,1, 0, 1, 1],
+    [1,0,1, 1, 1, 1],
+    [1,1,1, 1, 0, 1],
+    [1,1,0, 1, 1, 1],
+    [1,1,1, 1, 1, 1]
+  ]
+}
+const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [0,0,0]) => {
+  const [count, instances] = useMemo(() => {
+    let count = 0
     const instances = []
-    const [ox, oy, oz] = [gridWidth/2, 0, gridDepth/2].map(v => v * cellSize)
+    const [ox, oy, oz] = [offsetX, offsetY, offsetZ].map(v => v * cellSize)
     map.forEach((row, i) => {
       row.forEach((value, j) => {
         if (value === 1) {
-          instances.push({
-            position: [i * cellSize - ox, -oy, j * cellSize - oz],
-            rotation: [0, 0, 0],
-            scale: [1, 1, 1]
-          })
+          const x = i * cellSize - ox
+          const y = -oy
+          const z = j * cellSize - oz
+          // dist between px pz, and x, z
+          count ++
+            instances.push({
+              position: [x, y, z],
+              rotation: [0, 0, 0],
+              scale: [1, 1, 1],
+            })
         }
       })
     })
-    return instances
+    return [count, instances]
   }, [map]);
+  return [count, instances]
+}
+function Chunk ({ map, position, color}) {
+  const [count, instances] = useInstances(map, CELL_SIZE, position)
+  return <InstancedLevel floorColor={color} instances={instances} cellSize={CELL_SIZE} count={count}/>
+}
+
+function Level0({ floorColor }) {
+  // calculate chunks for 2x2 grid
+  const chunks = useMemo(() => {
+    let chunks = []
+    for(let x = -1; x < 1; x++) {
+      for(let z = -1; z < 1; z++) {
+        chunks.push({ Key: x+','+z, color: 0xffffff*Math.random(), map: MAPS.MAP_0, position: [x * Math.round((MAPS.MAP_0.length/2*CELL_SIZE/2-CELL_SIZE/2)/2+0.5), 0, z * Math.round((MAPS.MAP_0[0].length/2*CELL_SIZE/2-CELL_SIZE/2)/2+0.5)]})
+      }
+    }
+    return chunks}, [])
   return (
-    <InstancedLevel floorColor={floorColor} instances={instances} cellSize={cellSize} count={count}/>
+    <>
+    {chunks.map((chunk, i) => <Chunk key={chunk.Key} {...chunk} />)}
+    </>
   )
 }
 

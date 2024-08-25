@@ -23,12 +23,11 @@ import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 import { BackSide, MeshStandardMaterial } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
-import { femalePlayerScale, basePlayerScale } from '@/consts'
 
 import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from 'clsx'
-import Level0 from './components/Level0'
+import Level0, { CELL_SIZE, MAPS } from './components/Level0'
 // wrap app in context for accessing persistent state such as level and selected character
 const errorBoundaryJsx = <div className="p-8">
 <h1 className="text-3xl text-red-950 bg-red-300">⚠️Something went wrong.</h1>
@@ -52,9 +51,9 @@ const MyEnvironmentSphere = () => {
     <meshBasicMaterial {...envSphereProps} side={BackSide} />
   </Sphere>
 }
-export const EcctrlContainer = forwardRef(({ ecctrlProps, pos, characterURL, animationSet, yDist, character}, ecctrlRef) => {
+export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
-return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={pos} jumpVel={9.4}>
+return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
     {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
     <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}
@@ -129,7 +128,16 @@ function App({ overrideLevel = null }) {
     //'./characters/TestModel4-transformed.glb'
 
   // position of the character on start intro level
-  const introStartPosition = [3.5, 3, 0]
+  const {MAP_0} = MAPS
+  const introStartPosition = useMemo(() => {
+     const y = 15
+     const x = MAP_0.length/2*CELL_SIZE/2-CELL_SIZE/2
+     const z = MAP_0[0].length/2*CELL_SIZE/2-CELL_SIZE/2
+
+    return [
+      x,y,z
+    ]
+  }, [])
   // position to set the player in the world
   const [pos, setPos] = useState(introStartPosition)
 
@@ -153,9 +161,9 @@ function App({ overrideLevel = null }) {
     [INTRO]: {
       type: ECCTRL,
       // uses introStartPosition or the player position from the previous level
-      position: [0,15,0],//calculatePosition(introStartPosition),
-      respawnPosition: [0,15,0],//introStartPosition,
-      minY: -10,
+      position: calculatePosition(introStartPosition),
+      respawnPosition: introStartPosition,
+      minY: 0,
       hasPointerLock: true,
     },
   }
@@ -170,7 +178,9 @@ function App({ overrideLevel = null }) {
   [INTRO]: {
     Key: 'INTRO',
     Value: <Level0 
-    floorColor={0xff9966} />
+    introStartPosition={introStartPosition}
+    floorColor={0xff9966} 
+    ecctrlRef={ecctrlRef}/>
   }
  }
  const levels = {
@@ -230,7 +240,7 @@ function App({ overrideLevel = null }) {
   camZoomSpeed: 4,
   }
   const ecctrlContainerProps = {
-    ecctrlProps, pos, characterURL, animationSet, yDist, character
+    ecctrlProps, position: pos, characterURL, animationSet, yDist, character
   }
 const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} /> 
   // with keyboard controls
