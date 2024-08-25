@@ -170,7 +170,7 @@ function App({ overrideLevel = null }) {
   [INTRO]: {
     Key: 'INTRO',
     Value: <Level0 
-    floorColor={0x5d1122} />
+    floorColor={0xff9966} />
   }
  }
  const levels = {

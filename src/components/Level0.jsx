@@ -10,6 +10,7 @@ function InstancedLevel({ floorColor, instances, count, cellSize }){
             onClick={(e) => {
               
             }}
+            receiveShadow
           >
             <boxGeometry args={[cellSize, 1, cellSize]} />
             <meshStandardMaterial color={floorColor}/>
