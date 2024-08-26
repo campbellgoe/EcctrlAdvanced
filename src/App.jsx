@@ -53,7 +53,7 @@ const MyEnvironmentSphere = () => {
 }
 export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
-return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4}>
+return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4} maxVelLimit={10}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
     {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
     <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}

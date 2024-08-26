@@ -1,5 +1,6 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { InstancedRigidBodies } from '@react-three/rapier';
+import { useFrame } from '@react-three/fiber';
 
 function InstancedLevel({ floorColor, instances, count, cellSize }) {
   const ref = useRef();
@@ -14,7 +15,7 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
     >
       <instancedMesh
         ref={ref}
-        args={[null, null, count]}
+        args={[null, null, count, false, true, false]}
         dispose={null}
         onClick={(e) => {}}
         receiveShadow
@@ -49,7 +50,7 @@ const calculateHexPosition = (i, j, cellSize) => {
   return [x, 0, z];
 };
 
-const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [0, 0, 0]) => {
+const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [0, 0, 0], color = 0xffffff) => {
   const [count, instances] = useMemo(() => {
     let count = 0;
     const instances = [];
@@ -62,7 +63,8 @@ const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [
           instances.push({
             position: [x - ox, y - oy, z - oz],
             rotation: [0, 0, 0],
-            scale: [1, 1, 1]
+            scale: [1, 1, 1],
+            color: color
           });
           count++;
         }
@@ -75,7 +77,7 @@ const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [
 };
 
 function Chunk({ map, position, color }) {
-  const [count, instances] = useInstances(map, CELL_SIZE, position);
+  const [count, instances] = useInstances(map, CELL_SIZE, position, color);
   return (
     <InstancedLevel
       floorColor={color}
@@ -86,21 +88,23 @@ function Chunk({ map, position, color }) {
   );
 }
 
-function Level0({ floorColor }) {
+function Level0({ ecctrlRef, floorColor }) {
+
+const [[ox, oz], setOffset] = useState([0,0])
   const chunks = useMemo(() => {
     const chunkWidth = MAPS.MAP_0[0].length;
     const chunkHeight = MAPS.MAP_0.length;
 
     let chunks = [];
     const cSize = 1
-    for (let x = -3; x < 3; x++) {
-      for (let z = -3; z < 3; z++) {
-         // Horizontal distance between chunks
-         const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
-         // Vertical distance between chunks, with row staggering
-         const offsetZ =
-           (z * chunkHeight * cSize * 1.5 +
-           (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
+    for (let x = -3+ox; x < 3+ox; x++) {
+      for (let z = -3+oz; z < 3+oz; z++) {
+        // Horizontal distance between chunks
+        const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
+        // Vertical distance between chunks, with row staggering
+        const offsetZ =
+          (z * chunkHeight * cSize * 1.5 +
+            (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
 
         chunks.push({
           Key: `${x},${z}`,
@@ -111,8 +115,19 @@ function Level0({ floorColor }) {
       }
     }
     return chunks;
-  }, []);
+  }, [ox, oz]);
+  useFrame(() => {
 
+    if (ecctrlRef.current) {
+      try {
+        const { x, y, z } = ecctrlRef.current.translation()
+        setOffset([-Math.floor((x/CELL_SIZE/MAPS.MAP_0.length)/Math.sqrt(3)), -Math.floor((z/CELL_SIZE/MAPS.MAP_0.length)/1.5)])
+      } catch (err) {
+console.error(err)
+      }
+    }
+    return true
+  })
   return (
     <>
       {chunks.map((chunk, i) => (
