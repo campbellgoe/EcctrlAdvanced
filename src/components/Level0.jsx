@@ -4,20 +4,13 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useLoader } from '@react-three/fiber'
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { ClampToEdgeWrapping } from 'three';
+import { Html } from '@react-three/drei';
   
-function Sprite({ url = "", frame, ...props }) {
-  const frameOutOf24 = useMemo(() => frame%24+1, [frame])
-  const url2 = useMemo(() => url+frameOutOf24.toString().padStart(4, "0"), [url])
-  const texture = useLoader(TextureLoader, url2+'.png', (texture) => {})
-  const sprite = useRef()
-  texture.wrapS = texture.wrapT = ClampToEdgeWrapping
-
-  texture.offset.x = 0
-  texture.offset.y = 0
+function Sprite({ url = "", ...props }) {
   return (
-    <sprite {...props} ref={sprite}>
-      <spriteMaterial attach="material" map={texture} />
-    </sprite>
+    <Html  as='div' sprite transform occlude frustumCulled={false} {...props}>
+      <img src={url} className="w-full h-full"/>
+    </Html>
   )
 }
 
@@ -168,7 +161,7 @@ console.error(err)
         <Chunk key={chunk.Key} {...chunk} />
       ))}
       <axesHelper args={[50]} />
-      <Sprite position={[12, 4, 24]} scale={[10,10,10]} url='/images/BigBush/Monsterra_' frame={frame} dispose={null}/>
+      <Sprite position={[12, 4, 24]} scale={[10,10,10]} url='/images/BigBush/x512_Monsterra.png' dispose={null}/>
     </>
   );
 }
