@@ -1,5 +1,4 @@
 import { INTRO } from '@/consts.js'
-import { isMobile } from 'react-device-detect'
 export default function LevelExtras({ level }) {
   const introJsx = <>
   <hemisphereLight
@@ -27,7 +26,7 @@ export default function LevelExtras({ level }) {
         shadow-camera-top={50}
         shadow-camera-bottom={-50}
       />
-      <ambientLight intensity={Math.PI * isMobile ? 0.8 : 0.2}/>
+      <ambientLight intensity={Math.PI * 0.2}/>
       {data[level]}
     </>
   )

@@ -1,10 +1,31 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { InstancedRigidBodies } from '@react-three/rapier';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useLoader } from '@react-three/fiber'
+import { TextureLoader } from 'three/src/loaders/TextureLoader'
+import { ClampToEdgeWrapping } from 'three';
+  
+function Sprite({ url = "", frame, ...props }) {
+  const frameOutOf24 = useMemo(() => frame%24+1, [frame])
+  const url2 = useMemo(() => url+frameOutOf24.toString().padStart(4, "0"), [url])
+  const texture = useLoader(TextureLoader, url2+'.png', (texture) => {})
+  const sprite = useRef()
+  texture.wrapS = texture.wrapT = ClampToEdgeWrapping
+
+  texture.offset.x = 0
+  texture.offset.y = 0
+  return (
+    <sprite {...props} ref={sprite}>
+      <spriteMaterial attach="material" map={texture} />
+    </sprite>
+  )
+}
 
 function InstancedLevel({ floorColor, instances, count, cellSize }) {
   const ref = useRef();
-
+  if(ref?.current?.geometry?.boundingSphere === null){
+    ref.current.geometry.computeBoundingSphere()
+  }
   return (
     <InstancedRigidBodies
       instances={instances}
@@ -22,7 +43,7 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
         frustumCulled={false}
       >
         <cylinderGeometry args={[cellSize, cellSize, 1, 6]} /> {/* Hexagonal shape */}
-        <meshStandardMaterial color={floorColor} />
+        <meshPhongMaterial color={floorColor} />
       </instancedMesh>
     </InstancedRigidBodies>
   );
@@ -116,8 +137,10 @@ const [[ox, oz], setOffset] = useState([0,0])
     }
     return chunks;
   }, [ox, oz]);
-  useFrame(() => {
-
+  const camera = useThree(state => state.camera)
+  const [frame, setFrame] = useState(0)
+  useFrame((state) => {
+    console.log('frame', frame)
     if (ecctrlRef.current) {
       try {
         const { x, y, z } = ecctrlRef.current.translation()
@@ -125,7 +148,18 @@ const [[ox, oz], setOffset] = useState([0,0])
       } catch (err) {
 console.error(err)
       }
+      try {
+
+        // how to calculate the frame from the camera perspective
+        // const angle = Math.atan2(state.camera.position.x, state.camera.position.z)
+        // console.log('angle', angle)
+        // const frame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24
+        setFrame(frame =>( frame + 1) % 24)
+      }catch(err){
+        console.error(err)
+      }
     }
+    
     return true
   })
   return (
@@ -134,8 +168,8 @@ console.error(err)
         <Chunk key={chunk.Key} {...chunk} />
       ))}
       <axesHelper args={[50]} />
+      <Sprite position={[12, 4, 24]} scale={[10,10,10]} url='/images/BigBush/Monsterra_' frame={frame} dispose={null}/>
     </>
   );
 }
-
 export default Level0;
