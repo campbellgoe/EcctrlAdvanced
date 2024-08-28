@@ -272,7 +272,6 @@ function Level0({ ecctrlRef, floorColor }) {
     return true
   })
   const [plants, setPlants] = useState([])
-  console.log('plants:', plants)
   useEffect(() => {
     const savePlantMaterials = async () => {
       const materialSources = [{
