@@ -6,14 +6,19 @@ import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { ClampToEdgeWrapping, Vector3 } from 'three';
 import { Html } from '@react-three/drei';
   
-function Sprite({ spriteRef, imgRef, frame: frameInt, url = "", ...props }) {
-  const frame = useMemo(() => ((frameInt+1)%24).toString().padStart(4, '0'), [])
+function Sprite({ spriteRef, imgRef, frame: frameInt, url = "", distance, ...props }) {
+  const frame = useMemo(() => ((frameInt)%24).toString().padStart(4, '0'), [])
+  const [hidden, setOcclude] = useState()
   return (
     <group ref={spriteRef} {...props}>
-      <Html as='div' sprite transform occlude="blending" frustumCulled={false} >
-        <img onClick={(e) => {
-          e.preventDefault()
-        }} ref={imgRef} src={url+frame+'.png'} className="w-full h-full"/>
+      <Html as='div' sprite transform occlude
+  onOcclude={setOcclude}
+  style={{
+    transition: 'all 0.5s',
+    opacity: hidden ? distance < 20 ? 1-distance/20 : 0 : 1,
+    transform: `scale(${hidden ? 0.9 : 1})`
+  }} frustumCulled={false} >
+        <img ref={imgRef} src={url+frame+'.png'} className="w-full h-full" />
       </Html>
     </group>
   )
@@ -53,10 +58,10 @@ const cellSize = CELL_SIZE;
 export const MAPS = {
   MAP_0: [
     [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 1, 1],
-    [1, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 1],
-    [1, 1, 0, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1]
   ]
 };
@@ -118,8 +123,8 @@ const [[ox, oz], setOffset] = useState([0,0])
 
     let chunks = [];
     const cSize = 1
-    for (let x = -1+ox; x < 1+ox; x++) {
-      for (let z = -1+oz; z < 1+oz; z++) {
+    for (let x = -2+ox; x < 2+ox; x++) {
+      for (let z = -2+oz; z < 2+oz; z++) {
         // Horizontal distance between chunks
         const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
         // Vertical distance between chunks, with row staggering
@@ -137,6 +142,7 @@ const [[ox, oz], setOffset] = useState([0,0])
     }
     return chunks;
   }, [ox, oz]);
+  const [distToSprite, setDistToSprite] = useState(0)
   const spriteRef = useRef()
   const imgRef = useRef()
   const camera = useThree(state => state.camera)
@@ -172,11 +178,14 @@ console.error(err)
 
           const xDist = posCamera.x - posSprite.x;
           const zDist = posCamera.z - posSprite.z;
+          const dist = Math.sqrt(xDist*xDist + zDist*zDist)
+          console.log('dist', dist)
+          setDistToSprite(dist)
           const angleRadians = Math.atan2(zDist, xDist);
 
           // const angleRadians = posSprite.angleTo(posCamera);
           const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-          const newFrame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24
+          const newFrame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24+1
           setFrame(newFrame)
           imgRef.current.src = '/images/BigBush/Monsterra_'+newFrame.toString().padStart(4, '0')+'.png'
         }
@@ -189,6 +198,7 @@ console.error(err)
   })
   return (
     <>
+      <Sprite spriteRef={spriteRef} imgRef={imgRef} frame={frame} distance={distToSprite} position={[12, 2, 24]} scale={[2,2,2]} url='/images/BigBush/Monsterra_' dispose={null}/>
       <RigidBody colliders="trimesh"
         type="fixed"
         ccd
@@ -208,7 +218,6 @@ console.error(err)
         <Chunk key={chunk.key} {...chunk} />
       ))}
       <axesHelper args={[50]} />
-      <Sprite spriteRef={spriteRef} imgRef={imgRef} frame={frame} position={[12, 4, 24]} scale={[2,2,2]} url='/images/BigBush/Monsterra_' dispose={null}/>
     </>
   );
 }
