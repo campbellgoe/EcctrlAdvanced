@@ -177,10 +177,10 @@ function App({ overrideLevel = null }) {
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
-    Value: <Level0 
+    Value: (<Level0 
     introStartPosition={introStartPosition}
     floorColor={0xff9966} 
-    ecctrlRef={ecctrlRef}/>
+    ecctrlRef={ecctrlRef}/>)
   }
  }
  const levels = {
@@ -242,11 +242,11 @@ function App({ overrideLevel = null }) {
   const ecctrlContainerProps = {
     ecctrlProps, position: pos, characterURL, animationSet, yDist, character
   }
-const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} /> 
+const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
   // with keyboard controls
-  const mainWithInputJsx = <KeyboardControls map={keyboardMap}>
+  const mainWithInputJsx = (<KeyboardControls map={keyboardMap}>
     {mainJsx}
-  </KeyboardControls>
+  </KeyboardControls>)
 
   //get the jsx for this level type
   const jsx = {
@@ -301,7 +301,6 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
               {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
             </Canvas>
-           
           </Suspense>
         </ErrorBoundary>
       </div>

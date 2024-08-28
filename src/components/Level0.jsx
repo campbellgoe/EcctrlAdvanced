@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { InstancedRigidBodies } from '@react-three/rapier';
+import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useLoader } from '@react-three/fiber'
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { ClampToEdgeWrapping } from 'three';
 import { Html } from '@react-three/drei';
   
-function Sprite({ url = "", ...props }) {
+function Sprite({ ref, frame: frameInt, url = "", ...props }) {
+  const frame = useMemo(() => ((frameInt+1)%24).toString().padStart(4, '0'), [])
   return (
-    <Html  as='div' sprite transform occlude frustumCulled={false} {...props}>
-      <img src={url} className="w-full h-full"/>
+    <Html ref={ref} as='div' sprite transform occlude="raycast" frustumCulled={false} {...props}>
+      <img src={url+frame+'.png'} className="w-full h-full"/>
     </Html>
   )
 }
@@ -35,7 +36,7 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
         receiveShadow
         frustumCulled={false}
       >
-        <cylinderGeometry args={[cellSize, cellSize, 1, 6]} /> {/* Hexagonal shape */}
+        <cylinderGeometry args={[cellSize, cellSize, 1, 6]} />{/* Hexagonal shape */}
         <meshPhongMaterial color={floorColor} />
       </instancedMesh>
     </InstancedRigidBodies>
@@ -74,8 +75,10 @@ const useInstances = (map, cellSize, [offsetX = 0, offsetY = 0, offsetZ = 0] = [
       row.forEach((value, j) => {
         if (value === 1) {
           const [x, y, z] = calculateHexPosition(i, j, cellSize);
+          const [ix, iy, iz] = [x - ox, y - oy, z - oz]
           instances.push({
-            position: [x - ox, y - oy, z - oz],
+            key: `instance_${ix},${iy},${iz}`,
+            position: [ix, iy, iz],
             rotation: [0, 0, 0],
             scale: [1, 1, 1],
             color: color
@@ -121,7 +124,7 @@ const [[ox, oz], setOffset] = useState([0,0])
             (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
 
         chunks.push({
-          Key: `${x},${z}`,
+          key: `instance_${offsetX},${offsetZ}`,
           color: 0xffffff * Math.random(),
           map: MAPS.MAP_0,
           position: [offsetX, 0, offsetZ] // Position based on the correct chunk offsets
@@ -130,6 +133,7 @@ const [[ox, oz], setOffset] = useState([0,0])
     }
     return chunks;
   }, [ox, oz]);
+  const spriteRef = useRef()
   const camera = useThree(state => state.camera)
   const [frame, setFrame] = useState(0)
   useFrame((state) => {
@@ -143,11 +147,20 @@ console.error(err)
       }
       try {
 
-        // how to calculate the frame from the camera perspective
+        
+
         // const angle = Math.atan2(state.camera.position.x, state.camera.position.z)
         // console.log('angle', angle)
-        // const frame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24
-        setFrame(frame =>( frame + 1) % 24)
+        // const frame = Math.floor((angle/(Math.PI*2))*24)%24
+
+        const sprite = spriteRef.current
+        if(sprite){
+          console.log('sprite:', sprite)
+          // first calculate angle between camera and sprite
+          // sprite is a drei Html component
+          const angle = Math.atan2(camera.position.x - sprite.position.x, camera.position.z - sprite.position.z)
+          setFrame(Math.floor((angle/(Math.PI*2))*24)%24)
+        }
       }catch(err){
         console.error(err)
       }
@@ -157,11 +170,22 @@ console.error(err)
   })
   return (
     <>
+      <RigidBody colliders="trimesh"
+        type="fixed"
+        ccd
+        mass={0}>
+        <group dispose={null}>
+          <mesh>
+            <cylinderGeometry args={[12, 12, 12, 6]} />
+            <meshPhongMaterial color={0x775511} />
+          </mesh>
+        </group>
+      </RigidBody>
       {chunks.map((chunk, i) => (
-        <Chunk key={chunk.Key} {...chunk} />
+        <Chunk key={chunk.key} {...chunk} />
       ))}
       <axesHelper args={[50]} />
-      <Sprite position={[12, 4, 24]} scale={[10,10,10]} url='/images/BigBush/x512_Monsterra.png' dispose={null}/>
+      <Sprite ref={spriteRef} frame={frame} position={[12, 4, 24]} scale={[2,2,2]} url='/images/BigBush/Monsterra_' dispose={null}/>
     </>
   );
 }
