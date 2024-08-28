@@ -163,7 +163,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: 0,
+      minY: 0.5,
       hasPointerLock: true,
     },
   }
