@@ -6,17 +6,21 @@ import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { ClampToEdgeWrapping, Vector3, SpriteMaterial } from 'three';
 import { Html } from '@react-three/drei';
 
-function Sprite({ spriteRef, textureMaps, frame, url = "", distance, ...props }) {
+function Sprite({ spriteRef, textureMaps, frame, distance, ...props }) {
+  const material = useMemo(() => {
+return textureMaps[frame || 0] || null
+  } , [textureMaps, frame])
+  
   // const myOccludingRef = useRef()
   // const frame = useMemo(() => ((frameInt) % 24).toString().padStart(4, '0'), [])
   // const [hidden, setOcclude] = useState()
 
-  // console.log('textureMaps:', textureMaps, 'frame:', frame)
+  // console.log('textureMaps:', textureMaps, 'frame:', frame
   return (
     <>
-      <group  >
-        {!!textureMaps.length && <sprite ref={spriteRef} {...props} material={textureMaps[frame]} visible={true}>
-        </sprite>}
+        {(!!textureMaps.length && !!material) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
+          <spriteMaterial attach="material" map={material.map} color={0xffffff} />
+        </sprite>
         {/* <Html as='div' sprite transform occlude
           onOcclude={(occ) => {
             setOcclude(occ)
@@ -29,7 +33,6 @@ function Sprite({ spriteRef, textureMaps, frame, url = "", distance, ...props })
           }} frustumCulled={false} >
           <img ref={imgRef} src="" className="w-full h-full select-none" />
         </Html> */}
-      </group>
       {/* hitarea for the tree */}
       <RigidBody colliders="trimesh" ccd type="fixed" mass={0}>
         <group {...props} opacity={0} transparent={true} >
@@ -39,6 +42,7 @@ function Sprite({ spriteRef, textureMaps, frame, url = "", distance, ...props })
           </mesh>
         </group>
       </RigidBody>
+      </>}
     </>
   )
 }
@@ -165,12 +169,20 @@ function Level0({ ecctrlRef, floorColor }) {
     }
   }))
   const [[ox, oz], setOffset] = useState([0, 0])
+  const colors = useMemo(() => {
+    const colors = []
+    for (let i = 0; i < 128; i++) {
+      colors.push(0xffffff * Math.random())
+    }
+    return colors
+  }, [])
   const chunks = useMemo(() => {
     const chunkWidth = MAPS.MAP_0[0].length;
     const chunkHeight = MAPS.MAP_0.length;
 
     let chunks = [];
     const cSize = 1
+    let index = 0
     for (let x = -2 + ox; x < 2 + ox; x++) {
       for (let z = -2 + oz; z < 2 + oz; z++) {
         // Horizontal distance between chunks
@@ -182,10 +194,11 @@ function Level0({ ecctrlRef, floorColor }) {
 
         chunks.push({
           key: `instance_${offsetX},${offsetZ}`,
-          color: 0xffffff * Math.random(),
+          color: colors[index % 128],
           map: MAPS.MAP_0,
           position: [offsetX, 1, offsetZ] // Position based on the correct chunk offsets
         });
+        index ++
       }
     }
     return chunks;
@@ -269,7 +282,7 @@ function Level0({ ecctrlRef, floorColor }) {
         textureMaps.push((
           new Promise((resolve, reject) => {
             loader.load('/images/BigBush/Monsterra_' + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
-              resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true }))
+              resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
             }, undefined, (err) => {
               reject(err)
               // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))

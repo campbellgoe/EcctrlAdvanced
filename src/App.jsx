@@ -53,7 +53,7 @@ const MyEnvironmentSphere = () => {
 }
 export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
-return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4} maxVelLimit={10}>
+return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4} maxVelLimit={10} camCollision={false}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
     {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
     <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}
@@ -163,7 +163,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: 0.5,
+      minY: -10,
       hasPointerLock: true,
     },
   }
@@ -238,6 +238,7 @@ function App({ overrideLevel = null }) {
   camMaxDis: -50,
   camMinDis: -2,
   camZoomSpeed: 4,
+  camCollision: false
   }
   const ecctrlContainerProps = {
     ecctrlProps, position: pos, characterURL, animationSet, yDist, character
