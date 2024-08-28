@@ -131,8 +131,8 @@ function App({ overrideLevel = null }) {
   const {MAP_0} = MAPS
   const introStartPosition = useMemo(() => {
      const y = 15
-     const x = MAP_0.length/2*CELL_SIZE/2-CELL_SIZE/2
-     const z = MAP_0[0].length/2*CELL_SIZE/2-CELL_SIZE/2
+     const x = -20
+     const z = -20
 
     return [
       x,y,z
@@ -163,7 +163,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: 0.5,
+      minY: 0.99,
       hasPointerLock: true,
     },
   }

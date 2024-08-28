@@ -137,7 +137,7 @@ function Level0({ ecctrlRef, floorColor }) {
     width: 4,
     height: 4,
   }
-  const [spritesData, setSpritesData] = useState(Array.from({ length: 25 }, (_, index) => {
+  const [spritesData, setSpritesData] = useState(Array.from({ length: 60 }, (_, index) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
@@ -145,11 +145,13 @@ function Level0({ ecctrlRef, floorColor }) {
     const z = Math.random()*250
     const x = Math.random()*250
     const y = 1.5
+    const frameOffset = Math.floor(Math.random()*24)%24
     return {
       //position
       position: [x, y, z],
       distance: 0,
       posObject: new Vector3(),
+      frameOffset
     }
   }))
   const [[ox, oz], setOffset] = useState([0, 0])
@@ -221,7 +223,10 @@ function Level0({ ecctrlRef, floorColor }) {
 
                 // const angleRadians = posSprite.angleTo(posCamera);
                 const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-                const newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24) % 24 + 1
+                let newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.frameOffset || 0) % 24 + 1
+                if(dist > 100){
+                  newFrame = 1
+                }
                 // console.log('new frame', newFrame, imgRefs[i])
                 imgRefs.current[i].src = '/images/BigBush/Monsterra_' + newFrame.toString().padStart(4, '0') + '.png'
               sprite.userData = {
