@@ -281,7 +281,11 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
               onPointerDown={(e) => {
                 if (currentLevelData.type === ECCTRL && currentLevelData.hasPointerLock) {
                   if (e.pointerType === "mouse") {
+                    try {
                     e.target.requestPointerLock();
+                    } catch(err){
+                      console.warn("Unable to enter pointer lock.")
+                    }
                   }
                 }
               }}

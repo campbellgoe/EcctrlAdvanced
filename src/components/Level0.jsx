@@ -3,15 +3,19 @@ import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useLoader } from '@react-three/fiber'
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
-import { ClampToEdgeWrapping } from 'three';
+import { ClampToEdgeWrapping, Vector3 } from 'three';
 import { Html } from '@react-three/drei';
   
-function Sprite({ ref, frame: frameInt, url = "", ...props }) {
+function Sprite({ spriteRef, imgRef, frame: frameInt, url = "", ...props }) {
   const frame = useMemo(() => ((frameInt+1)%24).toString().padStart(4, '0'), [])
   return (
-    <Html ref={ref} as='div' sprite transform occlude="raycast" frustumCulled={false} {...props}>
-      <img src={url+frame+'.png'} className="w-full h-full"/>
-    </Html>
+    <group ref={spriteRef} {...props}>
+      <Html as='div' sprite transform occlude="blending" frustumCulled={false} >
+        <img onClick={(e) => {
+          e.preventDefault()
+        }} ref={imgRef} src={url+frame+'.png'} className="w-full h-full"/>
+      </Html>
+    </group>
   )
 }
 
@@ -134,6 +138,7 @@ const [[ox, oz], setOffset] = useState([0,0])
     return chunks;
   }, [ox, oz]);
   const spriteRef = useRef()
+  const imgRef = useRef()
   const camera = useThree(state => state.camera)
   const [frame, setFrame] = useState(0)
   useFrame((state) => {
@@ -155,11 +160,26 @@ console.error(err)
 
         const sprite = spriteRef.current
         if(sprite){
-          console.log('sprite:', sprite)
-          // first calculate angle between camera and sprite
-          // sprite is a drei Html component
-          const angle = Math.atan2(camera.position.x - sprite.position.x, camera.position.z - sprite.position.z)
-          setFrame(Math.floor((angle/(Math.PI*2))*24)%24)
+          console.log('sprite:', sprite, state.camera.position, sprite.position)
+          // // first calculate angle between camera and sprite
+          // // sprite is a drei Html component
+          let posSprite = new Vector3();
+          sprite.getWorldPosition(posSprite);
+
+
+          let posCamera = new Vector3();
+          camera.getWorldPosition(posCamera);
+
+          const xDist = posCamera.x - posSprite.x;
+          const zDist = posCamera.z - posSprite.z;
+          const angleRadians = Math.atan2(zDist, xDist);
+
+          // const angleRadians = posSprite.angleTo(posCamera);
+          const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
+          console.log('angle:', angle)
+          const newFrame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24
+          setFrame(newFrame)
+          imgRef.current.src = '/images/BigBush/Monsterra_'+newFrame.toString().padStart(4, '0')+'.png'
         }
       }catch(err){
         console.error(err)
@@ -175,8 +195,12 @@ console.error(err)
         ccd
         mass={0}>
         <group dispose={null}>
-          <mesh>
-            <cylinderGeometry args={[12, 12, 12, 6]} />
+          <mesh receiveShadow castShadow>
+            <cylinderGeometry args={[12, 20, 12, 6]} />
+            <meshPhongMaterial color={0x775511} />
+          </mesh>
+          <mesh receiveShadow castShadow>
+            <cylinderGeometry args={[12, 12, 128, 6]} />
             <meshPhongMaterial color={0x775511} />
           </mesh>
         </group>
@@ -185,7 +209,7 @@ console.error(err)
         <Chunk key={chunk.key} {...chunk} />
       ))}
       <axesHelper args={[50]} />
-      <Sprite ref={spriteRef} frame={frame} position={[12, 4, 24]} scale={[2,2,2]} url='/images/BigBush/Monsterra_' dispose={null}/>
+      <Sprite spriteRef={spriteRef} imgRef={imgRef} frame={frame} position={[12, 4, 24]} scale={[2,2,2]} url='/images/BigBush/Monsterra_' dispose={null}/>
     </>
   );
 }
