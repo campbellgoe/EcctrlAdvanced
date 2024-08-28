@@ -6,10 +6,10 @@ import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { ClampToEdgeWrapping, Vector3, SpriteMaterial } from 'three';
 import { Html } from '@react-three/drei';
 
-function Sprite({ spriteRef, textureMaps, frame, distance, ...props }) {
+function Sprite({ spriteRef, plants, plant, frame, distance, ...props }) {
   const material = useMemo(() => {
-return textureMaps[frame || 0] || null
-  } , [textureMaps, frame])
+return plants.find(({ src}) => src === plant)?.textureMaps[frame] || null
+  } , [plants, plant, frame])
   
   // const myOccludingRef = useRef()
   // const frame = useMemo(() => ((frameInt) % 24).toString().padStart(4, '0'), [])
@@ -18,7 +18,7 @@ return textureMaps[frame || 0] || null
   // console.log('textureMaps:', textureMaps, 'frame:', frame
   return (
     <>
-        {(!!textureMaps.length && !!material) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
+        {(!!plants.length && !!material) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
           <spriteMaterial attach="material" map={material.map} color={0xffffff} />
         </sprite>
         {/* <Html as='div' sprite transform occlude
@@ -147,19 +147,21 @@ function Level0({ ecctrlRef, floorColor }) {
     height: 4,
   }
 
-  const [spritesData, setSpritesData] = useState(Array.from({ length: 128 }, (_, index) => {
+  const [spritesData, setSpritesData] = useState(Array.from({ length: 256 }, (_, index) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
 
-    const z = Math.random() * 250
-    const x = Math.random() * 250
-    const y = 1.5
+    const z = Math.random() * 256 - 128
+    const isSmall = Math.random() > 0.33
+    const x = Math.random() * 256 - 128
+    const y = isSmall ? -3 : 1.5
     const startFrame = Math.floor(Math.random() * 24) % 24
     const frame = startFrame
     return {
+      src: isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_',
       key: index,
-      scale: 20 + Math.random() * 6,
+      scale: isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4,
       //position
       position: [x, y, z],
       distance: 0,
@@ -253,9 +255,6 @@ function Level0({ ecctrlRef, floorColor }) {
               newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24 + 1
             }
             spriteData.frame = newFrame
-            // console.log('new frame', newFrame, imgRefs[i])
-            //
-            // imgRefs.current[i].src = '/images/BigBush/Monsterra_' + newFrame.toString().padStart(4, '0') + '.png'
             sprite.userData = {
               ...sprite.userData || {},
               frame: newFrame,
@@ -272,43 +271,56 @@ function Level0({ ecctrlRef, floorColor }) {
 
     return true
   })
-  const [textureMapsReady, setTextureMapsReady] = useState([])
+  const [plants, setPlants] = useState([])
+  console.log('plants:', plants)
   useEffect(() => {
-    const fn = async () => {
-      const textureMaps = []
+    const savePlantMaterials = async () => {
+      const materialSources = [{
+        src: '/images/BigBush/Monsterra_',
+        count: 24,
+        calculateScale: () => Math.random()*4+14
+      }, {
+        src: '/images/SmallPlant/PalmSmall_',
+        count: 24,
+        calculateScale: () => Math.random()*2+7
+      } ]
       const loader = new TextureLoader();
-      for (let i = 0; i < 24; i++) {
-        // instantiate a loader
-        textureMaps.push((
-          new Promise((resolve, reject) => {
-            loader.load('/images/BigBush/Monsterra_' + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
-              resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
-            }, undefined, (err) => {
-              reject(err)
-              // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
-            })
-          })
-        ));
+      const plantsWithMaterials = await Promise.all(materialSources.map(async ({ src, count, calculateScale }) => {
+          const textureMaps = []
+          for (let i = 0; i < count; i++) {
+            // instantiate a loader
+            textureMaps.push((
+              new Promise((resolve, reject) => {
+                loader.load(src + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
+                  resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
+                }, undefined, (err) => {
+                  reject(err)
+                  // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
+                })
+              })
+            ));
 
-      }
-      const readyTextureMaps = await Promise.all(textureMaps)
-      
-      return readyTextureMaps
+          }
+        const readyTextureMapsForPlant = await Promise.all(textureMaps)
+
+        return { src, textureMaps: readyTextureMapsForPlant, calculateScale }
+      }))
+      return plantsWithMaterials
+
     }
-    fn().then((textureMaps) => {
-      console.log('textureMaps done:', textureMaps)
-      setTextureMapsReady(textureMaps)
+    savePlantMaterials().then(plants => {
+      console.log('plants:', plants)
+      setPlants(plants)
     })
     .catch(err => {
-      console.error("error loading texture maps", err)
+      console.error('error loading plant material', err)
     })
-
   }, [])
   return (
     <>
-      {spritesData.map(({ key, scale, position, distance, frame }, i) => {
+      {spritesData.map(({ key, src, scale, position, distance, frame }, i) => {
         return (
-          <Sprite key={key} scale={scale} textureMaps={textureMapsReady} spriteRef={node => {
+          <Sprite key={key} scale={scale} plants={plants} plant={src} spriteRef={node => {
             if (node) {
               spriteRefs.current[i] = node
             }
