@@ -118,8 +118,8 @@ const [[ox, oz], setOffset] = useState([0,0])
 
     let chunks = [];
     const cSize = 1
-    for (let x = -3+ox; x < 3+ox; x++) {
-      for (let z = -3+oz; z < 3+oz; z++) {
+    for (let x = -1+ox; x < 1+ox; x++) {
+      for (let z = -1+oz; z < 1+oz; z++) {
         // Horizontal distance between chunks
         const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
         // Vertical distance between chunks, with row staggering
@@ -141,8 +141,9 @@ const [[ox, oz], setOffset] = useState([0,0])
   const imgRef = useRef()
   const camera = useThree(state => state.camera)
   const [frame, setFrame] = useState(0)
+  const posSprite = useMemo(() => new Vector3())
+  const posCamera = useMemo(() => new Vector3())
   useFrame((state) => {
-    console.log('frame', frame)
     if (ecctrlRef.current) {
       try {
         const { x, y, z } = ecctrlRef.current.translation()
@@ -160,14 +161,13 @@ console.error(err)
 
         const sprite = spriteRef.current
         if(sprite){
-          console.log('sprite:', sprite, state.camera.position, sprite.position)
           // // first calculate angle between camera and sprite
           // // sprite is a drei Html component
-          let posSprite = new Vector3();
+          
           sprite.getWorldPosition(posSprite);
 
 
-          let posCamera = new Vector3();
+          
           camera.getWorldPosition(posCamera);
 
           const xDist = posCamera.x - posSprite.x;
@@ -176,7 +176,6 @@ console.error(err)
 
           // const angleRadians = posSprite.angleTo(posCamera);
           const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-          console.log('angle:', angle)
           const newFrame = Math.floor((angle/(Math.PI*2)+0.5)*24)%24
           setFrame(newFrame)
           imgRef.current.src = '/images/BigBush/Monsterra_'+newFrame.toString().padStart(4, '0')+'.png'
