@@ -3,17 +3,21 @@ import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useLoader } from '@react-three/fiber'
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
-import { ClampToEdgeWrapping, Vector3 } from 'three';
+import { ClampToEdgeWrapping, Vector3, SpriteMaterial } from 'three';
 import { Html } from '@react-three/drei';
 
-function Sprite({ spriteRef, imgRef, url = "", distance, ...props }) {
-  const myOccludingRef = useRef()
+function Sprite({ spriteRef, textureMaps, frame, url = "", distance, ...props }) {
+  // const myOccludingRef = useRef()
   // const frame = useMemo(() => ((frameInt) % 24).toString().padStart(4, '0'), [])
-  const [hidden, setOcclude] = useState()
+  // const [hidden, setOcclude] = useState()
+
+  // console.log('textureMaps:', textureMaps, 'frame:', frame)
   return (
     <>
-      <group ref={spriteRef} {...props}>
-        <Html as='div' sprite transform occlude
+      <group  >
+        {!!textureMaps.length && <sprite ref={spriteRef} {...props} material={textureMaps[frame]} visible={true}>
+        </sprite>}
+        {/* <Html as='div' sprite transform occlude
           onOcclude={(occ) => {
             setOcclude(occ)
           }}
@@ -24,13 +28,14 @@ function Sprite({ spriteRef, imgRef, url = "", distance, ...props }) {
             opacity: distance < 100 ? 0.75 - (distance / 200) + 0.25 : 0,
           }} frustumCulled={false} >
           <img ref={imgRef} src="" className="w-full h-full select-none" />
-        </Html>
+        </Html> */}
       </group>
+      {/* hitarea for the tree */}
       <RigidBody colliders="trimesh" ccd type="fixed" mass={0}>
-        <group ref={myOccludingRef} {...props} visible={true} opacity={0} transparent={true} >
+        <group {...props} opacity={0} transparent={true} >
           <mesh>
-            <cylinderGeometry args={[0, 2, 5, 12]} />
-            <meshStandardMaterial opacity={0} transparent={true} />
+            <cylinderGeometry args={[0, 0.2, 1, 12]} />
+            <meshStandardMaterial opacity={0} transparent={true} depthWrite={false}/>
           </mesh>
         </group>
       </RigidBody>
@@ -56,7 +61,7 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
         receiveShadow
         frustumCulled={false}
       >
-        <cylinderGeometry args={[cellSize, cellSize, 1, 6]} />{/* Hexagonal shape */}
+        <cylinderGeometry args={[cellSize, cellSize, 10, 6]} />{/* Hexagonal shape */}
         <meshPhongMaterial color={floorColor} />
       </instancedMesh>
     </InstancedRigidBodies>
@@ -137,21 +142,26 @@ function Level0({ ecctrlRef, floorColor }) {
     width: 4,
     height: 4,
   }
-  const [spritesData, setSpritesData] = useState(Array.from({ length: 60 }, (_, index) => {
+
+  const [spritesData, setSpritesData] = useState(Array.from({ length: 128 }, (_, index) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
 
-    const z = Math.random()*250
-    const x = Math.random()*250
+    const z = Math.random() * 250
+    const x = Math.random() * 250
     const y = 1.5
-    const frameOffset = Math.floor(Math.random()*24)%24
+    const startFrame = Math.floor(Math.random() * 24) % 24
+    const frame = startFrame
     return {
+      key: index,
+      scale: 20 + Math.random() * 6,
       //position
       position: [x, y, z],
       distance: 0,
       posObject: new Vector3(),
-      frameOffset
+      startFrame,
+      frame
     }
   }))
   const [[ox, oz], setOffset] = useState([0, 0])
@@ -174,7 +184,7 @@ function Level0({ ecctrlRef, floorColor }) {
           key: `instance_${offsetX},${offsetZ}`,
           color: 0xffffff * Math.random(),
           map: MAPS.MAP_0,
-          position: [offsetX, 0, offsetZ] // Position based on the correct chunk offsets
+          position: [offsetX, 1, offsetZ] // Position based on the correct chunk offsets
         });
       }
     }
@@ -183,7 +193,7 @@ function Level0({ ecctrlRef, floorColor }) {
   // const [distToSprite, setDistToSprite] = useState([0])
   // const [spriteFrame, setSpriteFrame] = useState([0])
   const posCamera = useMemo(() => new Vector3())
-  
+
   const spriteRefs = useRef([])
   const imgRefs = useRef([])
   const camera = useThree(state => state.camera)
@@ -203,43 +213,45 @@ function Level0({ ecctrlRef, floorColor }) {
         // console.log('angle', angle)
         // const frame = Math.floor((angle/(Math.PI*2))*24)%24
 
-          spritesData.map((spriteData, i) => {
-            const sprite = spriteRefs.current[i]
-            if(sprite){
-              // // first calculate angle between camera and sprite
-              // // sprite is a drei Html component
-              
-              sprite.getWorldPosition(spriteData.posObject);
+        setSpritesData(spritesData.map((spriteData, i) => {
+          const sprite = spriteRefs.current[i]
+          if (sprite) {
+            // // first calculate angle between camera and sprite
+            // // sprite is a drei Html component
+
+            sprite.getWorldPosition(spriteData.posObject);
 
 
-              
-              camera.getWorldPosition(posCamera);
 
-                const xDist = posCamera.x - spriteData.posObject.x;
-                const zDist = posCamera.z - spriteData.posObject.z;
-                const dist = Math.sqrt(xDist * xDist + zDist * zDist)
-                // console.log('dist', dist)
-                const angleRadians = Math.atan2(zDist, xDist);
+            camera.getWorldPosition(posCamera);
 
-                // const angleRadians = posSprite.angleTo(posCamera);
-                const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-                let newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.frameOffset || 0) % 24 + 1
-                if(dist > 100){
-                  newFrame = 1
-                }
-                // console.log('new frame', newFrame, imgRefs[i])
-                imgRefs.current[i].src = '/images/BigBush/Monsterra_' + newFrame.toString().padStart(4, '0') + '.png'
-              sprite.userData = {
-                ...sprite.userData || {},
-                frame: newFrame,
-                distance: dist
-              }
-              return spriteData
+            const xDist = posCamera.x - spriteData.posObject.x;
+            const zDist = posCamera.z - spriteData.posObject.z;
+            const dist = Math.sqrt(xDist * xDist + zDist * zDist)
+            // console.log('dist', dist)
+            const angleRadians = Math.atan2(zDist, xDist);
+
+            // const angleRadians = posSprite.angleTo(posCamera);
+            const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
+            let newFrame;
+            if (dist > 100) {
+              newFrame = spriteData.startFrame
             } else {
-              return spriteData
+              newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24 + 1
             }
-        })
-        
+            spriteData.frame = newFrame
+            // console.log('new frame', newFrame, imgRefs[i])
+            //
+            // imgRefs.current[i].src = '/images/BigBush/Monsterra_' + newFrame.toString().padStart(4, '0') + '.png'
+            sprite.userData = {
+              ...sprite.userData || {},
+              frame: newFrame,
+              distance: dist
+            }
+          }
+          return spriteData
+        }))
+
       } catch (err) {
         console.error(err)
       }
@@ -247,22 +259,48 @@ function Level0({ ecctrlRef, floorColor }) {
 
     return true
   })
+  const [textureMapsReady, setTextureMapsReady] = useState([])
+  useEffect(() => {
+    const fn = async () => {
+      const textureMaps = []
+      const loader = new TextureLoader();
+      for (let i = 0; i < 24; i++) {
+        // instantiate a loader
+        textureMaps.push((
+          new Promise((resolve, reject) => {
+            loader.load('/images/BigBush/Monsterra_' + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
+              resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true }))
+            }, undefined, (err) => {
+              reject(err)
+              // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
+            })
+          })
+        ));
+
+      }
+      const readyTextureMaps = await Promise.all(textureMaps)
+      
+      return readyTextureMaps
+    }
+    fn().then((textureMaps) => {
+      console.log('textureMaps done:', textureMaps)
+      setTextureMapsReady(textureMaps)
+    })
+    .catch(err => {
+      console.error("error loading texture maps", err)
+    })
+
+  }, [])
   return (
     <>
-      {spritesData.map(({ position, distance }, i) => {
+      {spritesData.map(({ key, scale, position, distance, frame }, i) => {
         return (
-<Sprite spriteRef={node => {
-        if(node){
-          spriteRefs.current[i] = node
-        }
-      }} imgRef={node => {
-        if(node){
-          imgRefs.current[i] = node
-        }
-      }} distance={distance} position={position} scale={[2, 2, 2]} url='/images/BigBush/Monsterra_' dispose={null} />
-        )
+          <Sprite key={key} scale={scale} textureMaps={textureMapsReady} spriteRef={node => {
+            if (node) {
+              spriteRefs.current[i] = node
+            }
+          }} distance={distance} position={position} frame={frame} dispose={null} />)
       })}
-      
       <RigidBody colliders="trimesh"
         type="fixed"
         ccd

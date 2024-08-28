@@ -130,7 +130,7 @@ function App({ overrideLevel = null }) {
   // position of the character on start intro level
   const {MAP_0} = MAPS
   const introStartPosition = useMemo(() => {
-     const y = 15
+     const y = 40
      const x = -20
      const z = -20
 
@@ -163,7 +163,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: 0.99,
+      minY: 0.5,
       hasPointerLock: true,
     },
   }
