@@ -45,7 +45,7 @@ export default function AppMain({ overrideLevel = null }) {
 
 const MyEnvironmentSphere = () => {
   const envSphereProps = useTexture({
-    map: '/night.png',
+    map: 'night.png',
   })
   return <Sphere scale={700}>
     <meshBasicMaterial {...envSphereProps} side={BackSide} />

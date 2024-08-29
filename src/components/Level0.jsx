@@ -293,7 +293,7 @@ function Level0({ ecctrlRef, floorColor }) {
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 100 }, (_, index) => {
+              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 35 }, (_, index) => {
                 const existingTree = spritesDataChunks[regionKey]?.[index]
                 if (existingTree) return existingTree
                 const isSmall = Math.random() > 0.33
