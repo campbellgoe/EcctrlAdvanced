@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
-import { useFrame, useThree } from '@react-three/fiber';
-import { useLoader } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber';
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
-import { ClampToEdgeWrapping, Vector3, SpriteMaterial } from 'three';
-import { Html } from '@react-three/drei';
-import { C } from '../../dist/assets/index-DGp570fO';
+import { Vector3, SpriteMaterial } from 'three';
 
 function Sprite({ spriteRef, plants, plant, frame, distance, ...props }) {
   const material = useMemo(() => {
@@ -157,7 +154,7 @@ function Level0({ ecctrlRef, floorColor }) {
     const z = Math.random() * spread - halfSpread - (oz * spread)
 
     const x = Math.random() * spread - halfSpread - (ox * spread)
-    const y = isSmall ? -3 : 1.5
+    const y = isSmall ? -3 : 0
     const startFrame = Math.floor(Math.random() * 24) % 24
     const frame = startFrame
     return {
@@ -296,7 +293,7 @@ function Level0({ ecctrlRef, floorColor }) {
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 100 }, (_, index) => {
+              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 35 }, (_, index) => {
                 const existingTree = spritesDataChunks[regionKey]?.[index]
                 if (existingTree) return existingTree
                 const isSmall = Math.random() > 0.33
@@ -461,7 +458,7 @@ function Level0({ ecctrlRef, floorColor }) {
         </group>
       </RigidBody>
       {chunks.map((chunk, i) => (
-        <Chunk key={chunk.key} {...chunk} />
+        <Chunk {...chunk} key={chunk.key} />
       ))}
       <axesHelper args={[50]} />
     </>
