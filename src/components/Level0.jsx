@@ -458,7 +458,7 @@ function Level0({ ecctrlRef, floorColor }) {
         </group>
       </RigidBody>
       {chunks.map((chunk, i) => (
-        <Chunk key={chunk.key} {...chunk} />
+        <Chunk {...chunk} key={chunk.key} />
       ))}
       <axesHelper args={[50]} />
     </>
