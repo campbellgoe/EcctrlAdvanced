@@ -35,14 +35,14 @@ function Sprite({ spriteRef, plants, plant, frame, distance, ...props }) {
           <img ref={imgRef} src="" className="w-full h-full select-none" />
         </Html> */}
         {/* hitarea for the tree */}
-        <RigidBody colliders="trimesh" ccd type="fixed" mass={0}>
+        {/* <RigidBody colliders="trimesh" ccd type="fixed" mass={0}>
           <group {...props} opacity={0} transparent={true} >
             <mesh>
               <cylinderGeometry args={[0, 0.2, 1, 12]} />
               <meshStandardMaterial opacity={0} transparent={true} depthWrite={false} />
             </mesh>
           </group>
-        </RigidBody>
+        </RigidBody> */}
       </>}
     </>
   )
@@ -75,7 +75,9 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
 
 export const CELL_SIZE = 10;
 const cellSize = CELL_SIZE;
-
+// chunks for sprites to spawn in
+const chunkStart = -2
+const chunkEnd = 2
 export const MAPS = {
   MAP_0: [
     [1, 1, 1, 1, 1, 1],
@@ -147,49 +149,14 @@ function Level0({ ecctrlRef, floorColor }) {
     width: 4,
     height: 4,
   }
-// spritesData.map((spriteData, i) => {
-//           const sprite = spriteRefs.current[i]
-//           if (sprite) {
-//             // // first calculate angle between camera and sprite
-//             // // sprite is a drei Html component
-
-//             sprite.getWorldPosition(spriteData.posObject);
-
-
-
-//             camera.getWorldPosition(posCamera);
-
-//             const xDist = posCamera.x - spriteData.posObject.x;
-//             const zDist = posCamera.z - spriteData.posObject.z;
-//             const dist = Math.sqrt(xDist * xDist + zDist * zDist)
-//             // console.log('dist', dist)
-//             const angleRadians = Math.atan2(zDist, xDist);
-
-//             // const angleRadians = posSprite.angleTo(posCamera);
-//             const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-//             let newFrame;
-//             if (dist > 100) {
-//               newFrame = spriteData.startFrame
-//             } else {
-//               newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
-//             }
-//             spriteData.frame = newFrame
-//             sprite.userData = {
-//               ...sprite.userData || {},
-//               frame: newFrame,
-//               distance: dist
-//             }
-//           }
-//           return spriteData
-//         })
   const generatePlant = useCallback((spriteKey, regionKey, { src, scale, isSmall }, { spread = 128, ox = 0, oz = 0 }) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
     const halfSpread = spread / 2
-    const z = Math.random() * spread - halfSpread - oz*halfSpread
+    const z = Math.random() * spread - halfSpread - (oz * spread)
 
-    const x = Math.random() * spread - halfSpread - ox*halfSpread
+    const x = Math.random() * spread - halfSpread - (ox * spread)
     const y = isSmall ? -3 : 1.5
     const startFrame = Math.floor(Math.random() * 24) % 24
     const frame = startFrame
@@ -207,8 +174,8 @@ function Level0({ ecctrlRef, floorColor }) {
     }
   }, [])
   const [[ox, oz], setOffset] = useState([0, 0])
-  
-  
+
+
   const colors = useMemo(() => {
     const colors = []
     for (let i = 0; i < 128; i++) {
@@ -254,7 +221,7 @@ function Level0({ ecctrlRef, floorColor }) {
   //       const offsetZ =
   //         (z * chunkHeight * cSize * 1.5 +
   //           (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
- 
+
   //       const spritesDataChunk = Array.from({ length: 35 }, (_, index) => {
   //         const isSmall = Math.random() > 0.33
   //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
@@ -266,36 +233,19 @@ function Level0({ ecctrlRef, floorColor }) {
   //   }
   //   return spritesData
   // }, [oz, ox])
-  const initialRegionKey = useMemo(() => 0+","+0, [])
-  const [spritesData, setSpritesData] = useState({
-    [initialRegionKey]: (Array.from({ length: 100 }, (_, index) => {
-      // const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
-      // const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
-      // const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
-  
-      const z = Math.random() * 256 - 128
+  const initialRegionKey = useMemo(() => 0 + "," + 0, [])
+  const [spritesData, setSpritesData] = useState({})
+  /*
+    [initialRegionKey]: (Array.from({ length: 35 }, (_, index) => {
       const isSmall = Math.random() > 0.33
-      const x = Math.random() * 256 - 128
-      const y = isSmall ? -3 : 1.5
-      const startFrame = Math.floor(Math.random() * 24) % 24
-      const frame = startFrame
-      const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_' 
-      return {
-        src,
-        key: 0+","+0+"_"+index+"_"+src,
-        regionKey: initialRegionKey,
-        scale: isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4,
-        //position
-        position: [x, y, z],
-        distance: 0,
-        posObject: new Vector3(),
-        startFrame,
-        frame
-      }
+      const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+      const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+      const spriteKey = initialRegionKey + "_" + index + "_" + src
+      return generatePlant(spriteKey, initialRegionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3) * 2), ox: 0 * 2, oz: 0 * 2 })
     }))
-  })
+  })*/
   // console.log('spritesDataFULL', spritesData)
-  
+
   // const [distToSprite, setDistToSprite] = useState([0])
   // const [spriteFrame, setSpriteFrame] = useState([0])
   const posCamera = useMemo(() => new Vector3())
@@ -303,109 +253,128 @@ function Level0({ ecctrlRef, floorColor }) {
   const spriteRefs = useRef({})
   // const imgRefs = useRef([])
   // const camera = useThree(state => state.camera)
-// const generatePlants = useCallback((iox, ioz) => {
-//   setSpritesData(spritesDataChunks => {
-//     console.log('sprites chunks')
-//     return {
-//       ...spritesDataChunks,
-//       [iox + "," + ioz]: Array.from({ length: 35 }, (_, index) => {
-//         const isSmall = Math.random() > 0.33
-//         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-//         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-//         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: iox, oz: ioz })
-//       })
-//     }
-//   })
-// }, [])
-const prevOx = useRef(0)
-const prevOz = useRef(0)
+  // const generatePlants = useCallback((iox, ioz) => {
+  //   setSpritesData(spritesDataChunks => {
+  //     console.log('sprites chunks')
+  //     return {
+  //       ...spritesDataChunks,
+  //       [iox + "," + ioz]: Array.from({ length: 35 }, (_, index) => {
+  //         const isSmall = Math.random() > 0.33
+  //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+  //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+  //         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: iox, oz: ioz })
+  //       })
+  //     }
+  //   })
+  // }, [])
+  const prevOx = useRef(0)
+  const prevOz = useRef(0)
   useFrame((state) => {
     if (ecctrlRef.current) {
+      let newOx = 0
+      let newOz = 0
       try {
         const { x, y, z } = ecctrlRef.current.translation()
-        
+
 
         // if has changed chunk
-        setOffset([-Math.floor((x / CELL_SIZE / MAPS.MAP_0.length) / Math.sqrt(3)), -Math.floor((z / CELL_SIZE / MAPS.MAP_0.length) / 1.5)])
-          // generatePlants(iox, ioz)
-          // changed chunk
-          // const initialSpritesData = useMemo(() => Array.from({ length: 100 }, (_, index) => {
-          //   const isSmall = Math.random() > 0.33
-          //   const scale = isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4
-          //   const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-          //   return generatePlant(index+""+src, { src, scale, isSmall }, { spread: 256, ox, oz})
-          // }), [])
-          const regionKey = ox + "," + oz
-          
-          setSpritesData(spritesDataChunks => {
-            return {
-              ...spritesDataChunks,
-              [regionKey]: Array.from({ length: 100 }, (_, index) => {
+        newOx = -Math.floor((x / CELL_SIZE / MAPS.MAP_0.length) / Math.sqrt(3))
+        newOz = -Math.floor((z / CELL_SIZE / MAPS.MAP_0.length) / 1.5)
+        setOffset([newOx, newOz])
+        // generatePlants(iox, ioz)
+        // changed chunk
+        // const initialSpritesData = useMemo(() => Array.from({ length: 100 }, (_, index) => {
+        //   const isSmall = Math.random() > 0.33
+        //   const scale = isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4
+        //   const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+        //   return generatePlant(index+""+src, { src, scale, isSmall }, { spread: 256, ox, oz})
+        // }), [])
+
+
+        setSpritesData(spritesDataChunks => {
+          const newSpriteDataChunks = { ...spritesDataChunks }
+          for (let ix = chunkStart; ix < chunkEnd; ix++) {
+            for (let iz = chunkStart; iz < chunkEnd; iz++) {
+              const regionKey = (newOx + ix) + "," + (newOz + iz)
+              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 100 }, (_, index) => {
                 const existingTree = spritesDataChunks[regionKey]?.[index]
-                if(existingTree) return existingTree
+                if (existingTree) return existingTree
                 const isSmall = Math.random() > 0.33
                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
                 const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-                const spriteKey = regionKey+"_"+index + "_" + src
-                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spread: 256, ox, oz })
+                const spriteKey = regionKey + "_" + index + "_" + src
+                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), ox: newOx +ix, oz: newOz + iz })
               })
             }
-          })
-         
-        
+          }
+
+          return newSpriteDataChunks
+
+        })
+
+
       } catch (err) {
         console.error(err)
       }
       try {
 
-        
-setSpritesData(spritesDataChunks => {
-  // console.log('sprites chunks', spritesDataChunks)
-  return Object.fromEntries(Object.entries(spritesDataChunks).map(([key, spritesDataChunk]) => {
-    return [key, spritesDataChunk.map((spriteData, i) => {
-      const sprite = spriteRefs.current[key]?.[i]
-      if (sprite) {
-        // // first calculate angle between camera and sprite
-        // // sprite is a drei Html component
 
-        sprite.getWorldPosition(spriteData.posObject);
+        setSpritesData(spritesDataChunks => {
+          const newSpritesData = {}
+          for (let ix = chunkStart; ix < chunkEnd; ix++) {
+            for (let iz = chunkStart; iz < chunkEnd; iz++) {
+              const regionKey = (newOx + ix) + "," + (newOz + iz)
+              newSpritesData[regionKey] = spritesDataChunks[regionKey].map((spriteData, i) => {
+              const sprite = spriteRefs.current[spriteData.key]
+              if (sprite) {
+                // // first calculate angle between camera and sprite
+                // // sprite is a drei Html component
+
+                sprite.getWorldPosition(spriteData.posObject);
 
 
 
-        state.camera.getWorldPosition(posCamera);
+                state.camera.getWorldPosition(posCamera);
 
-        const xDist = posCamera.x - spriteData.posObject.x;
-        const zDist = posCamera.z - spriteData.posObject.z;
-        const dist = Math.sqrt(xDist * xDist + zDist * zDist)
-        // console.log('dist', dist)
-        const angleRadians = Math.atan2(zDist, xDist);
+                const xDist = posCamera.x - spriteData.posObject.x;
+                const zDist = posCamera.z - spriteData.posObject.z;
+                const dist = Math.sqrt(xDist * xDist + zDist * zDist)
+                // console.log('dist', dist)
+                const angleRadians = Math.atan2(zDist, xDist);
 
-        // const angleRadians = posSprite.angleTo(posCamera);
-        const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-        let newFrame;
-        if (dist > 100) {
-          newFrame = spriteData.startFrame
-        } else {
-          newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
+                // const angleRadians = posSprite.angleTo(posCamera);
+                const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
+                let newFrame;
+                if (dist > 100) {
+                  newFrame = spriteData.startFrame
+                } else {
+                  newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
+                }
+                if (dist > 200) {
+                  sprite.visible = false
+                } else if (sprite.visible === false) {
+                  sprite.visible = true
+                }
+
+                if(dist > 300) {
+
+                }
+                spriteData.frame = newFrame
+                sprite.userData = {
+                  ...sprite.userData || {},
+                  frame: newFrame,
+                  distance: dist
+                }
+              }
+              return spriteData
+            })
+          }
         }
-        if(dist > 200){
-          sprite.visible = false
-        } else if(sprite.visible === false){
-          sprite.visible = true
-        }
-        spriteData.frame = newFrame
-        sprite.userData = {
-          ...sprite.userData || {},
-          frame: newFrame,
-          distance: dist
-        }
-      }
-      return spriteData
-    })]
+        return newSpritesData
 
-}))
-})
-       
+          
+      })
+
         // const angle = Math.atan2(state.camera.position.x, state.camera.position.z)
         // console.log('angle', angle)
         // const frame = Math.floor((angle/(Math.PI*2))*24)%24
@@ -459,11 +428,11 @@ setSpritesData(spritesDataChunks => {
       console.log('plants:', plants)
       setPlants(plants)
     })
-    .catch(err => {
-      console.error('error loading plant material', err)
-    })
+      .catch(err => {
+        console.error('error loading plant material', err)
+      })
   }, [])
-  const regionKey = ox+","+oz
+  const regionKey = ox + "," + oz
   return (
     <>
       {Object.entries(spritesData).map(([value, regionKey]) => {
@@ -474,7 +443,7 @@ setSpritesData(spritesDataChunks => {
                 spriteRefs.current[spriteKey] = node
               }
             }} distance={distance} position={position} frame={frame} dispose={null} />)
-        }) 
+        })
       })}
       <RigidBody colliders="trimesh"
         type="fixed"
