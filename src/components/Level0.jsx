@@ -18,7 +18,7 @@ return plants.find(({ src}) => src === plant)?.textureMaps[frame] || null
   // console.log('textureMaps:', textureMaps, 'frame:', frame
   return (
     <>
-        {(!!plants.length && !!material) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
+        {(!!plants.length) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
           <spriteMaterial attach="material" map={material.map} color={0xffffff} />
         </sprite>
         {/* <Html as='div' sprite transform occlude
@@ -147,7 +147,7 @@ function Level0({ ecctrlRef, floorColor }) {
     height: 4,
   }
 
-  const [spritesData, setSpritesData] = useState(Array.from({ length: 256 }, (_, index) => {
+  const [spritesData, setSpritesData] = useState(Array.from({ length: 200 }, (_, index) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
@@ -174,7 +174,7 @@ function Level0({ ecctrlRef, floorColor }) {
   const colors = useMemo(() => {
     const colors = []
     for (let i = 0; i < 128; i++) {
-      colors.push(0xffffff * Math.random())
+      colors.push(0x00ff00 * Math.random()+0x000044 + 0x440000)
     }
     return colors
   }, [])
@@ -252,7 +252,7 @@ function Level0({ ecctrlRef, floorColor }) {
             if (dist > 100) {
               newFrame = spriteData.startFrame
             } else {
-              newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24 + 1
+              newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
             }
             spriteData.frame = newFrame
             sprite.userData = {
