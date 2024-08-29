@@ -6,13 +6,13 @@ import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
 import LevelLightsAndExtras from '@/LevelLightsAndExtras.jsx'
-import { RigidBody } from '@react-three/rapier';
+
 import { useInView } from 'react-intersection-observer'
 import { Respawn, DisableRender } from '@/utils'
 
 import { localStorageKey, PersistentAppProvider, usePersistentAppContext } from "@/state/PersistentStateProvider";
 import { EphemeralAppProvider, useEphemeralAppContext } from '@/state/EphemeralStateProvider'
-import { useControls } from 'leva'
+// import { useControls } from 'leva'
 
 import { isMobile } from 'react-device-detect';
 
@@ -23,11 +23,11 @@ import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 import { BackSide, MeshStandardMaterial } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
-import { femalePlayerScale, basePlayerScale } from '@/consts'
 
 import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from 'clsx'
+import Level0, { CELL_SIZE, MAPS } from './components/Level0'
 // wrap app in context for accessing persistent state such as level and selected character
 const errorBoundaryJsx = <div className="p-8">
 <h1 className="text-3xl text-red-950 bg-red-300">⚠️Something went wrong.</h1>
@@ -51,9 +51,9 @@ const MyEnvironmentSphere = () => {
     <meshBasicMaterial {...envSphereProps} side={BackSide} />
   </Sphere>
 }
-export const EcctrlContainer = forwardRef(({ ecctrlProps, pos, characterURL, animationSet, yDist, character}, ecctrlRef) => {
+export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
-return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={pos} jumpVel={9.4}>
+return <Ecctrl {...ecctrlProps} dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={position} jumpVel={9.4} maxVelLimit={10} camCollision={false}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
     {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
     <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}
@@ -128,7 +128,16 @@ function App({ overrideLevel = null }) {
     //'./characters/TestModel4-transformed.glb'
 
   // position of the character on start intro level
-  const introStartPosition = [3.5, 3, 0]
+  const {MAP_0} = MAPS
+  const introStartPosition = useMemo(() => {
+     const y = 40
+     const x = -20
+     const z = -20
+
+    return [
+      x,y,z
+    ]
+  }, [])
   // position to set the player in the world
   const [pos, setPos] = useState(introStartPosition)
 
@@ -152,8 +161,8 @@ function App({ overrideLevel = null }) {
     [INTRO]: {
       type: ECCTRL,
       // uses introStartPosition or the player position from the previous level
-      position: [0,15,0],//calculatePosition(introStartPosition),
-      respawnPosition: [0,15,0],//introStartPosition,
+      position: calculatePosition(introStartPosition),
+      respawnPosition: introStartPosition,
       minY: -10,
       hasPointerLock: true,
     },
@@ -164,26 +173,26 @@ function App({ overrideLevel = null }) {
 
   // intro level is used for multiple levels
   // here's the jsx to share for that
-  const mat = useMemo(() => new MeshStandardMaterial(0xff9966))
+  
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
-    Value: <>
-    <RigidBody colliders="trimesh" type="fixed" ccd mass={0}>
-      <Box args={[10,1,10]} material={mat} receiveShadow={true} />
-      </RigidBody>
-    </>
+    Value: (<Level0 
+    introStartPosition={introStartPosition}
+    floorColor={0xff9966} 
+    ecctrlRef={ecctrlRef}/>)
   }
  }
  const levels = {
   [INTRO]: LEVELS[INTRO].Value
  }
+ const resetGameSaveData = false
   // TODO: these controls can be removed in the final version
-  const [{ lvl, resetGameSaveData }, set] = useControls(() => ({
-    lvl: level,
-    levels: { value: LEVELS[INTRO].Key },
-    resetGameSaveData: false
-  }))
+  // const [{ lvl, resetGameSaveData }, set] = useControls(() => ({
+  //   lvl: level,
+  //   levels: { value: LEVELS[INTRO].Key },
+  //   resetGameSaveData: false
+  // }))
 
   // resets the game if resetGameSaveData is true
   useEffect(() => {
@@ -197,7 +206,7 @@ function App({ overrideLevel = null }) {
   // TODO: this can be extacted into a custom hook e.g. useUpdateLevel?
   useEffect(() => {
     // TODO: this can be removed
-    set({ lvl: level })
+    // set({ lvl: level })
     // if intro level, show keyboard controls ui
     if (level === INTRO) {
       setShowControls(true)
@@ -217,24 +226,29 @@ function App({ overrideLevel = null }) {
     }
   }, [level])
   // TODO: can remove this. it sets the level on entering it into the leva control
-  useEffect(() => {
-    if (lvl in levelData) {
-      setLevel(lvl)
-    }
-  }, [lvl])
+  // useEffect(() => {
+  //   if (lvl in levelData) {
+  //     setLevel(lvl)
+  //   }
+  // }, [lvl])
   const yDist = 0.35
   const ecctrlProps = {
     capsuleRadius: yDist,
     floatHeight: yDist,
+    camInitDis: -5,
+  camMaxDis: -50,
+  camMinDis: -2,
+  camZoomSpeed: 4,
+  camCollision: false
   }
   const ecctrlContainerProps = {
-    ecctrlProps, pos, characterURL, animationSet, yDist, character
+    ecctrlProps, position: pos, characterURL, animationSet, yDist, character
   }
-const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} /> 
+const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
   // with keyboard controls
-  const mainWithInputJsx = <KeyboardControls map={keyboardMap}>
+  const mainWithInputJsx = (<KeyboardControls map={keyboardMap}>
     {mainJsx}
-  </KeyboardControls>
+  </KeyboardControls>)
 
   //get the jsx for this level type
   const jsx = {
@@ -269,7 +283,11 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
               onPointerDown={(e) => {
                 if (currentLevelData.type === ECCTRL && currentLevelData.hasPointerLock) {
                   if (e.pointerType === "mouse") {
+                    try {
                     e.target.requestPointerLock();
+                    } catch(err){
+                      console.warn("Unable to enter pointer lock.")
+                    }
                   }
                 }
               }}
@@ -289,7 +307,6 @@ const mainJsx = <EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />
               {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
             </Canvas>
-           
           </Suspense>
         </ErrorBoundary>
       </div>
