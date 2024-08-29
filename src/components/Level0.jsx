@@ -268,7 +268,7 @@ function Level0({ ecctrlRef, floorColor }) {
   // }, [oz, ox])
   const initialRegionKey = useMemo(() => 0+","+0, [])
   const [spritesData, setSpritesData] = useState({
-    [initialRegionKey]: (Array.from({ length: 35 }, (_, index) => {
+    [initialRegionKey]: (Array.from({ length: 100 }, (_, index) => {
       // const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
       // const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
       // const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
@@ -340,7 +340,9 @@ const prevOz = useRef(0)
           setSpritesData(spritesDataChunks => {
             return {
               ...spritesDataChunks,
-              [regionKey]: Array.from({ length: 35 }, (_, index) => {
+              [regionKey]: Array.from({ length: 100 }, (_, index) => {
+                const existingTree = spritesDataChunks[regionKey]?.[index]
+                if(existingTree) return existingTree
                 const isSmall = Math.random() > 0.33
                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
                 const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
@@ -385,6 +387,11 @@ setSpritesData(spritesDataChunks => {
           newFrame = spriteData.startFrame
         } else {
           newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
+        }
+        if(dist > 200){
+          sprite.visible = false
+        } else if(sprite.visible === false){
+          sprite.visible = true
         }
         spriteData.frame = newFrame
         sprite.userData = {
@@ -459,13 +466,15 @@ setSpritesData(spritesDataChunks => {
   const regionKey = ox+","+oz
   return (
     <>
-      {spritesData?.[regionKey]?.map(({ key: spriteKey, src, scale, position, distance, frame }, i) => {
-        return (
-          <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
-            if (node) {
-              spriteRefs.current[spriteKey] = node
-            }
-          }} distance={distance} position={position} frame={frame} dispose={null} />)
+      {Object.entries(spritesData).map(([value, regionKey]) => {
+        return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame }, i) => {
+          return (
+            <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
+              if (node) {
+                spriteRefs.current[spriteKey] = node
+              }
+            }} distance={distance} position={position} frame={frame} dispose={null} />)
+        }) 
       })}
       <RigidBody colliders="trimesh"
         type="fixed"
