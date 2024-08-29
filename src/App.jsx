@@ -12,7 +12,7 @@ import { Respawn, DisableRender } from '@/utils'
 
 import { localStorageKey, PersistentAppProvider, usePersistentAppContext } from "@/state/PersistentStateProvider";
 import { EphemeralAppProvider, useEphemeralAppContext } from '@/state/EphemeralStateProvider'
-import { useControls } from 'leva'
+// import { useControls } from 'leva'
 
 import { isMobile } from 'react-device-detect';
 
@@ -186,12 +186,13 @@ function App({ overrideLevel = null }) {
  const levels = {
   [INTRO]: LEVELS[INTRO].Value
  }
+ const resetGameSaveData = false
   // TODO: these controls can be removed in the final version
-  const [{ lvl, resetGameSaveData }, set] = useControls(() => ({
-    lvl: level,
-    levels: { value: LEVELS[INTRO].Key },
-    resetGameSaveData: false
-  }))
+  // const [{ lvl, resetGameSaveData }, set] = useControls(() => ({
+  //   lvl: level,
+  //   levels: { value: LEVELS[INTRO].Key },
+  //   resetGameSaveData: false
+  // }))
 
   // resets the game if resetGameSaveData is true
   useEffect(() => {
@@ -205,7 +206,7 @@ function App({ overrideLevel = null }) {
   // TODO: this can be extacted into a custom hook e.g. useUpdateLevel?
   useEffect(() => {
     // TODO: this can be removed
-    set({ lvl: level })
+    // set({ lvl: level })
     // if intro level, show keyboard controls ui
     if (level === INTRO) {
       setShowControls(true)
@@ -225,11 +226,11 @@ function App({ overrideLevel = null }) {
     }
   }, [level])
   // TODO: can remove this. it sets the level on entering it into the leva control
-  useEffect(() => {
-    if (lvl in levelData) {
-      setLevel(lvl)
-    }
-  }, [lvl])
+  // useEffect(() => {
+  //   if (lvl in levelData) {
+  //     setLevel(lvl)
+  //   }
+  // }, [lvl])
   const yDist = 0.35
   const ecctrlProps = {
     capsuleRadius: yDist,
