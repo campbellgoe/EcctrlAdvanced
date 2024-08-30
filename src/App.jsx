@@ -1,7 +1,7 @@
 // import all neccesary code for the App
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Physics, CuboidCollider } from '@react-three/rapier'
-import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box } from '@react-three/drei'
+import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box, useHelper } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
@@ -20,7 +20,7 @@ import { isMobile } from 'react-device-detect';
 import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 
-import { BackSide, MeshStandardMaterial } from 'three'
+import { BackSide, MeshStandardMaterial, SpotLightHelper } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
 
@@ -269,6 +269,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
   <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} />
   
                 </EffectComposer>
+
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -306,6 +307,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
               {currentLevelData.type === NO_PLAYER && <Suspense fallback={null}>{levels[level]}</Suspense>}
               {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
+              <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} />
             </Canvas>
           </Suspense>
         </ErrorBoundary>
@@ -313,4 +315,16 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
 
     </div>
   )
+}
+
+function FollowCharacterSpotlight({ position }){
+  const spotlightRef = useRef(null)
+  useHelper(spotlightRef, SpotLightHelper, 'cyan')
+  useFrame((state, delta) => {
+    if(spotlightRef.current){
+      spotlightRef.current.target.position.set(position[0], position[1], position[2])
+    }
+    return true
+  })
+  return <spotLight castShadow position={position} color={0xffddff} intensity={3*Math.PI} />
 }

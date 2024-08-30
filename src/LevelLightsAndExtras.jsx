@@ -2,7 +2,7 @@ import { INTRO } from '@/consts.js'
 export default function LevelExtras({ level }) {
   const introJsx = <>
   <hemisphereLight
-    args={[ 'green', 'green', Math.PI * 0.33]}
+    args={[ 'green', 'green', Math.PI * 0.133]}
     />
   </>
   const data = {
@@ -11,7 +11,7 @@ export default function LevelExtras({ level }) {
   return (
     <>
       <directionalLight
-        intensity={Math.PI * 0.7}
+        intensity={Math.PI * 0.17}
         color={'#FFFFED'}
         castShadow
         shadow-bias={0}
@@ -26,7 +26,8 @@ export default function LevelExtras({ level }) {
         shadow-camera-top={50}
         shadow-camera-bottom={-50}
       />
-      <ambientLight intensity={Math.PI * 0.2}/>
+      <ambientLight intensity={Math.PI * 0.12}/>
+      <fogExp2 density={0.002} color={0xcccccc}/>
       {data[level]}
     </>
   )
