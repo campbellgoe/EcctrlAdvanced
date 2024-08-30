@@ -1,7 +1,7 @@
 // import all neccesary code for the App
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Physics, CuboidCollider } from '@react-three/rapier'
-import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box, useHelper } from '@react-three/drei'
+import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box, useHelper, SpotLight, useDepthBuffer } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
@@ -20,7 +20,7 @@ import { isMobile } from 'react-device-detect';
 import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 
-import { BackSide, MeshStandardMaterial, SpotLightHelper } from 'three'
+import { BackSide, MeshStandardMaterial, SpotLightHelper, Vector3 } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
 
@@ -269,7 +269,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
   <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} />
   
                 </EffectComposer>
-
+                
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -308,6 +308,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
               {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
               <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} />
+              <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} />
             </Canvas>
           </Suspense>
         </ErrorBoundary>
@@ -316,15 +317,26 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
     </div>
   )
 }
-
-function FollowCharacterSpotlight({ position }){
+function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
+  const depthBuffer = useDepthBuffer({ frames: 2  })
   const spotlightRef = useRef(null)
-  useHelper(spotlightRef, SpotLightHelper, 'cyan')
+  // useHelper(spotlightRef, SpotLightHelper, 'cyan')
   useFrame((state, delta) => {
-    if(spotlightRef.current){
-      spotlightRef.current.target.position.set(position[0], position[1], position[2])
-    }
+    spotlightRef.current.target.position.lerp(vec.set(position[0], position[1]-10, position[2]), 0.3)
+    spotlightRef.current.target.updateMatrixWorld()
+    // spotlightRef.current.target.update();
     return true
   })
-  return <spotLight castShadow position={position} color={0xffddff} intensity={3*Math.PI} />
+  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={1} {...props}/>
+}
+
+function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
+  useFrame(() => {
+    try {
+      const { x, y, z } = ecctrlRef.current.translation()
+      return setPos([x, y, z])
+    } catch(err){
+
+    }
+  })
 }
