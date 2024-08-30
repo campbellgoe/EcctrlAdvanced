@@ -366,18 +366,18 @@ function Level0({ ecctrlRef, floorColor }) {
                 let distanceFactor = dist / 200;
                 distanceFactor = Math.max(0, Math.min(1, distanceFactor)); // Ensure it stays between 0 and 1
                 spriteData.color = 0xffffff;
-                // Assuming spriteData.color is an RGB value like 0xRRGGBB
-                let r = (spriteData.color >> 16) & 0xff;
-                let g = (spriteData.color >> 8) & 0xff;
-                let b = spriteData.color & 0xff;
-                const blendAmount = 1 - distanceFactor
-                // Darken the color by blending with black (0x000000)
-                r = Math.floor(r * blendAmount);
-                g = Math.floor(g * blendAmount);
-                b = Math.floor(b * blendAmount);
+                // // Assuming spriteData.color is an RGB value like 0xRRGGBB
+                // let r = (spriteData.color >> 16) & 0xff;
+                // let g = (spriteData.color >> 8) & 0xff;
+                // let b = spriteData.color & 0xff;
+                // const blendAmount = 1 - distanceFactor
+                // // Darken the color by blending with black (0x000000)
+                // r = Math.floor(r * blendAmount);
+                // g = Math.floor(g * blendAmount);
+                // b = Math.floor(b * blendAmount);
 
-                // Combine the new RGB values back into a single color value
-                spriteData.color = (r << 16) | (g << 8) | b;
+                // // Combine the new RGB values back into a single color value
+                // spriteData.color = (r << 16) | (g << 8) | b;
                 // Assuming spriteData.color is an object with r, g, b, a properties or something similar
                 spriteData.alpha = alpha;
                 // sprite.userData = {

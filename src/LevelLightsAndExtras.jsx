@@ -27,7 +27,7 @@ export default function LevelExtras({ level }) {
         shadow-camera-bottom={-50}
       />
       <ambientLight intensity={Math.PI * 0.12}/>
-      <fogExp2 density={0.002} color={0xcccccc}/>
+      <fogExp2 attach="fog" density={0.02} color={0x000000}/>
       {data[level]}
     </>
   )
