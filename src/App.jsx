@@ -331,10 +331,12 @@ function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
 }
 
 function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
+  let frame = useRef(0)
   useFrame(() => {
     try {
       const { x, y, z } = ecctrlRef.current.translation()
-      return setPos([x, y, z])
+      if(frame.current%200 == 0) setPos([x, Math.max(0, y), z])
+      frame.current = (frame.current+1)%200
     } catch(err){
 
     }

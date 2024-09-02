@@ -2,9 +2,48 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
 import { useFrame } from '@react-three/fiber';
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
-import { Vector3, SpriteMaterial } from 'three';
+import { Vector3, SpriteMaterial, Matrix4, MeshStandardMaterial } from 'three';
 
-function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...props }) {
+function InstancedThing({spriteRef, material, instances, ...props}) {
+  const ref = useCallback(imesh => {
+    instances.forEach((data, index) => {
+      imesh.setMatrixAt(index, data.mat4)
+      imesh.setColorAt(index, data.col3)
+    })
+    imesh.instanceMatrix.needsUpdate = true
+	  imesh.instanceColor.needsUpdate = true
+    if(spriteRef?.current) spriteRef.current = imesh
+	}, [instances])
+  return (
+    <instancedMesh receiveShadow castShadow  ref={ref} material={material} args={[null, null, instances.length]}>
+      <boxPlaneGeometry args={[props.scale, props.scale]} />
+      <meshNormalMaterial map={material.map}/>
+    </instancedMesh>
+  )
+}
+
+function ChunksOfInstancedThing({  spriteRef, material, nInstances = 1, nSpread = 128, offsetPosition = [0,0,0], ...props }) {
+  const instances = useMemo(() => {
+    const instances = []
+    const mat4 = new Matrix4()
+    const white = new Color(0xffffff)
+    const [ox, oy, oz] = offsetPosition
+    for (let i = 0; i < nInstances; i++) {
+      mat4.setPosition(Math.random() * nSpread+ox, oy, Math.random() * nSpread +oz)
+      instances.push({
+        mat4,
+        col3: white
+      })
+    }
+    return instances
+  }, [offsetPosition])
+  const numInstances = instances?.length || 0
+  if (numInstances < 1) return null
+  const key = 'instanced-thing-' + numInstances // IMPORTANT: to include numInstances in key, otherwise gl will crash on change
+return <InstancedThing key={key} spriteRef={spriteRef} instances={instances} material={material} {...props} />
+}
+
+function Sprite({ nSpread, offsetPosition, spriteRef, plants, plant, frame, distance, color, alpha, ...props }) {
   const material = useMemo(() => {
     return plants.find(({ src }) => src === plant)?.textureMaps[frame] || null
   }, [plants, plant, frame])
@@ -13,31 +52,7 @@ function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...pr
   // const [hidden, setOcclude] = useState() 
   return (
     <>
-      {(!!plants.length) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
-        <spriteMaterial attach="material" map={material.map} color={color} opacity={typeof alpha == 'number' ? alpha : 1}/>
-      </sprite>
-        {/* <Html as='div' sprite transform occlude
-          onOcclude={(occ) => {
-            setOcclude(occ)
-          }}
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transition: 'all 0.5s',
-            opacity: distance < 100 ? 0.75 - (distance / 200) + 0.25 : 0,
-          }} frustumCulled={false} >
-          <img ref={imgRef} src="" className="w-full h-full select-none" />
-        </Html> */}
-        {/* hitarea for the tree */}
-        {/* <RigidBody colliders="trimesh" ccd type="fixed" mass={0}>
-          <group {...props} opacity={0} transparent={true} >
-            <mesh>
-              <cylinderGeometry args={[0, 0.2, 1, 12]} />
-              <meshStandardMaterial opacity={0} transparent={true} depthWrite={false} />
-            </mesh>
-          </group>
-        </RigidBody> */}
-      </>}
+    {(!!plants.length) && <ChunksOfInstancedThing spriteRef={spriteRef} material={material} nInstances={nSpread} nSpread={nSpread} offsetPosition={offsetPosition} />}
     </>
   )
 }
@@ -290,17 +305,16 @@ function Level0({ ecctrlRef, floorColor }) {
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 35 }, (_, index) => {
-                const existingTree = spritesDataChunks[regionKey]?.[index]
-                // const sprite = spriteRefs.current[spriteData.key]
-                // sprite.visible = false
-                if (existingTree) return existingTree
+              if(regionKey in spritesDataChunks){
+                // newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] 
+              } else {
                 const isSmall = Math.random() > 0.33
                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
                 const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-                const spriteKey = regionKey + "_" + index + "_" + src
-                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), ox: newOx +ix, oz: newOz + iz })
-              })
+                const spriteKey = regionKey + "_" + src
+                const plant = generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), ox: newOx +ix, oz: newOz + iz })
+                newSpriteDataChunks[regionKey] = plant
+              }
             }
           }
 
@@ -320,7 +334,8 @@ function Level0({ ecctrlRef, floorColor }) {
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpritesData[regionKey] = spritesDataChunks[regionKey].map((spriteData, i) => {
+              
+              const spriteData = spritesDataChunks[regionKey]
               const sprite = spriteRefs.current[spriteData.key]
               if (sprite) {
                 // // first calculate angle between camera and sprite
@@ -385,9 +400,8 @@ function Level0({ ecctrlRef, floorColor }) {
                 //   frame: newFrame,
                 //   distance: dist
                 // }
+                newSpritesData[regionKey] = spriteData
               }
-              return spriteData
-            })
           }
         }
         return newSpritesData
@@ -424,11 +438,11 @@ function Level0({ ecctrlRef, floorColor }) {
       const plantsWithMaterials = await Promise.all(materialSources.map(async ({ src, count, calculateScale }) => {
         const textureMaps = []
         for (let i = 0; i < count; i++) {
-          // instantiate a loader
+          // src.forEach(src =>
           textureMaps.push((
             new Promise((resolve, reject) => {
               loader.load(src + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
-                resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
+                resolve(new MeshStandardMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
               }, undefined, (err) => {
                 reject(err)
                 // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
@@ -453,17 +467,18 @@ function Level0({ ecctrlRef, floorColor }) {
       })
   }, [])
   const regionKey = ox + "," + oz
+  const nSpread = useMemo(() => CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3), [])
   return (
     <>
-      {Object.entries(spritesData).map(([value, regionKey]) => {
-        return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame, color, alpha}, i) => {
-          return (
-            <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
-              if (node) {
-                spriteRefs.current[spriteKey] = node
-              }
-            }} distance={distance} position={position} frame={frame} dispose={null} color={color} alpha={alpha}/>)
-        })
+      {Object.entries(spritesData).map(([regionKey, value]) => {
+        const { key: spriteKey, src, scale, position, distance, frame, color, alpha} = value
+        return (
+          <Sprite nSpread={nSpread} offsetPosition={[ox, 1, oz]} key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
+            if (node) {
+              spriteRefs.current[spriteKey] = node
+            }
+          }}
+          distance={distance} position={position} frame={frame} dispose={null} color={color} alpha={alpha}/>)
       })}
       <RigidBody colliders="trimesh"
         type="fixed"
