@@ -296,7 +296,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
             >
               {!inView && <DisableRender />}
               <Perf position="top-left" minimal />
-              <Suspense fallback={<MyEnvironmentSphere />}>{<StarySky position={pos}/>}</Suspense>
+              <Suspense fallback={<MyEnvironmentSphere />}>{<StarySky position={[pos[0], 0, pos[2]]}/>}</Suspense>
               
               <LevelLightsAndExtras level={level} />
               {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
@@ -336,9 +336,10 @@ function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
   useFrame(() => {
     try {
       const { x, y, z } = ecctrlRef.current.translation()
-      return setPos([x, y, z])
+      setPos([x, y, z])
     } catch(err){
 
     }
+    return true
   })
 }

@@ -4,10 +4,9 @@ import { BackSide, Clock, ShaderMaterial } from 'three'
 
 const StarrySky = ({ position, ...props }) => {
   const materialRef = useRef(null)
-  const clock = new Clock()
   useFrame(() => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = clock.getElapsedTime()
+      materialRef.current.uniforms.uTime.value = performance.now() / 1000
     }
     return true
   })
