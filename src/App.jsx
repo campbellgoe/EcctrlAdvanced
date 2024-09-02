@@ -28,6 +28,7 @@ import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from 'clsx'
 import Level0, { CELL_SIZE, MAPS } from './components/Level0'
+import StarySky from '@/components/StarySky'
 // wrap app in context for accessing persistent state such as level and selected character
 const errorBoundaryJsx = <div className="p-8">
 <h1 className="text-3xl text-red-950 bg-red-300">⚠️Something went wrong.</h1>
@@ -295,7 +296,8 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
             >
               {!inView && <DisableRender />}
               <Perf position="top-left" minimal />
-              <Suspense fallback={<MyEnvironmentSphere />}>{<Environment background files="/night.hdr" />}</Suspense>
+              <Suspense fallback={<MyEnvironmentSphere />}>{<StarySky position={pos}/>}</Suspense>
+              
               <LevelLightsAndExtras level={level} />
               {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
                 <Physics timeStep="vary">
@@ -327,7 +329,7 @@ function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
     // spotlightRef.current.target.update();
     return true
   })
-  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={1} {...props}/>
+  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={0.5} {...props}/>
 }
 
 function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
