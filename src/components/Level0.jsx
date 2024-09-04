@@ -4,20 +4,17 @@ import { useFrame } from '@react-three/fiber';
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { Vector3, SpriteMaterial } from 'three';
 
-function Sprite({ spriteRef, plants, plant, frame, distance, ...props }) {
+function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...props }) {
   const material = useMemo(() => {
     return plants.find(({ src }) => src === plant)?.textureMaps[frame] || null
   }, [plants, plant, frame])
-
   // const myOccludingRef = useRef()
   // const frame = useMemo(() => ((frameInt) % 24).toString().padStart(4, '0'), [])
-  // const [hidden, setOcclude] = useState()
-
-  // console.log('textureMaps:', textureMaps, 'frame:', frame
+  // const [hidden, setOcclude] = useState() 
   return (
     <>
       {(!!plants.length) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
-        <spriteMaterial attach="material" map={material.map} color={0xffffff} />
+        <spriteMaterial attach="material" map={material.map} color={color} opacity={typeof alpha == 'number' ? alpha : 1}/>
       </sprite>
         {/* <Html as='div' sprite transform occlude
           onOcclude={(occ) => {
@@ -134,7 +131,7 @@ function Chunk({ map, position, color }) {
   );
 }
 
-function Level0({ ecctrlRef, floorColor }) {
+function Level0({ ecctrlRef, floorColor, onReady }) {
   const wall = {
     depth: 30,
     width: 30,
@@ -295,6 +292,8 @@ function Level0({ ecctrlRef, floorColor }) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
               newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 35 }, (_, index) => {
                 const existingTree = spritesDataChunks[regionKey]?.[index]
+                // const sprite = spriteRefs.current[spriteData.key]
+                // sprite.visible = false
                 if (existingTree) return existingTree
                 const isSmall = Math.random() > 0.33
                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
@@ -353,15 +352,39 @@ function Level0({ ecctrlRef, floorColor }) {
                   sprite.visible = true
                 }
 
-                if(dist > 300) {
+                // if(dist > 300) {
 
-                }
+                // }
                 spriteData.frame = newFrame
-                sprite.userData = {
-                  ...sprite.userData || {},
-                  frame: newFrame,
-                  distance: dist
-                }
+                spriteData.distance = dist
+                // let distanceFactor = dist / 200;
+                let alpha = 1 ;//- distanceFactor;
+
+                // Clamp alpha to be between 0 and 1
+                alpha = Math.max(0, Math.min(1, alpha));
+
+                let distanceFactor = dist / 200;
+                distanceFactor = Math.max(0, Math.min(1, distanceFactor)); // Ensure it stays between 0 and 1
+                spriteData.color = 0xffffff;
+                // // Assuming spriteData.color is an RGB value like 0xRRGGBB
+                // let r = (spriteData.color >> 16) & 0xff;
+                // let g = (spriteData.color >> 8) & 0xff;
+                // let b = spriteData.color & 0xff;
+                // const blendAmount = 1 - distanceFactor
+                // // Darken the color by blending with black (0x000000)
+                // r = Math.floor(r * blendAmount);
+                // g = Math.floor(g * blendAmount);
+                // b = Math.floor(b * blendAmount);
+
+                // // Combine the new RGB values back into a single color value
+                // spriteData.color = (r << 16) | (g << 8) | b;
+                // Assuming spriteData.color is an object with r, g, b, a properties or something similar
+                spriteData.alpha = alpha;
+                // sprite.userData = {
+                //   ...sprite.userData || {},
+                //   frame: newFrame,
+                //   distance: dist
+                // }
               }
               return spriteData
             })
@@ -424,6 +447,7 @@ function Level0({ ecctrlRef, floorColor }) {
     savePlantMaterials().then(plants => {
       console.log('plants:', plants)
       setPlants(plants)
+      onReady(plants)
     })
       .catch(err => {
         console.error('error loading plant material', err)
@@ -433,13 +457,13 @@ function Level0({ ecctrlRef, floorColor }) {
   return (
     <>
       {Object.entries(spritesData).map(([value, regionKey]) => {
-        return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame }, i) => {
+        return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame, color, alpha}, i) => {
           return (
             <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
               if (node) {
                 spriteRefs.current[spriteKey] = node
               }
-            }} distance={distance} position={position} frame={frame} dispose={null} />)
+            }} distance={distance} position={position} frame={frame} dispose={null} color={color} alpha={alpha}/>)
         })
       })}
       <RigidBody colliders="trimesh"
