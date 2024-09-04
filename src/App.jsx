@@ -106,6 +106,7 @@ function App({ overrideLevel = null }) {
   const ephemeralStateDispatch = useEphemeralAppContext()
   const { state, dispatch } = persistentStateDispatch
   const { state: ephemeralState, dispatch: ephemeralDispatch } = ephemeralStateDispatch
+  const { ready } = ephemeralState
   const { ref, inView } = useInView()
   const level = state.level || INTRO
 
@@ -178,6 +179,9 @@ function App({ overrideLevel = null }) {
   [INTRO]: {
     Key: 'INTRO',
     Value: (<Level0 
+      onReady={() => {
+        ephemeralDispatch({ type: 'SET_READY', ready: true })
+      }}
     introStartPosition={introStartPosition}
     floorColor={0xff9966} 
     ecctrlRef={ecctrlRef}/>)
@@ -244,7 +248,7 @@ function App({ overrideLevel = null }) {
   const ecctrlContainerProps = {
     ecctrlProps, position: pos, characterURL, animationSet, yDist, character
   }
-const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
+const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />) : null
   // with keyboard controls
   const mainWithInputJsx = (<KeyboardControls map={keyboardMap}>
     {mainJsx}
@@ -327,16 +331,17 @@ function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
     // spotlightRef.current.target.update();
     return true
   })
-  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={1} {...props}/>
+  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={0} {...props}/>
 }
 
 function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
   useFrame(() => {
     try {
       const { x, y, z } = ecctrlRef.current.translation()
-      return setPos([x, y, z])
+      if(Math.random()>0.9) setPos([x, y, z])
     } catch(err){
 
     }
+    return true
   })
 }

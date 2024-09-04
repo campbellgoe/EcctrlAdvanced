@@ -19,6 +19,12 @@ export const ephemeralInitialState = {
 
 export const EphemeralAppReducer = (state, action) => {
   switch (action.type){
+    case "SET_READY": {
+      return {
+        ...state,
+        ready: action.ready
+      }
+    }
     case "SET_DIALOG": {
       return {...state, dialog: action.dialog }
     }

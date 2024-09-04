@@ -131,7 +131,7 @@ function Chunk({ map, position, color }) {
   );
 }
 
-function Level0({ ecctrlRef, floorColor }) {
+function Level0({ ecctrlRef, floorColor, onReady }) {
   const wall = {
     depth: 30,
     width: 30,
@@ -447,6 +447,7 @@ function Level0({ ecctrlRef, floorColor }) {
     savePlantMaterials().then(plants => {
       console.log('plants:', plants)
       setPlants(plants)
+      onReady(plants)
     })
       .catch(err => {
         console.error('error loading plant material', err)
