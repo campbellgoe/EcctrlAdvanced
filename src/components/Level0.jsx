@@ -444,6 +444,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
       return plantsWithMaterials
 
     }
+    console.log('saving plant materials')
     savePlantMaterials().then(plants => {
       console.log('plants:', plants)
       setPlants(plants)

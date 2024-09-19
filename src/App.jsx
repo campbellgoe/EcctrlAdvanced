@@ -248,7 +248,7 @@ function App({ overrideLevel = null }) {
   const ecctrlContainerProps = {
     ecctrlProps, position: pos, characterURL, animationSet, yDist, character
   }
-const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />) : null
+const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
   // with keyboard controls
   const mainWithInputJsx = (<KeyboardControls map={keyboardMap}>
     {mainJsx}
@@ -273,7 +273,12 @@ const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerPro
   <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} />
   
                 </EffectComposer>
-                
+                useEffect(() => {
+                  setTimeout(() => {
+                    const loadingEl =document.getElementById("loading-screen")
+                    loadingEl.style.display = ready ? "none" : ""
+                  }, 500)
+                }, [ready])
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -283,7 +288,6 @@ const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerPro
             <Canvas
               ref={ref}
               shadows
-              linear
               flat
               onPointerDown={(e) => {
                 if (currentLevelData.type === ECCTRL && currentLevelData.hasPointerLock) {
@@ -311,7 +315,7 @@ const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerPro
               {currentLevelData.type === NO_PLAYER && <Suspense fallback={null}>{levels[level]}</Suspense>}
               {!tier && <MyEnvironmentSphere />}
               {effectsJsx}
-              <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} />
+              {/* <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} /> */}
               <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} />
             </Canvas>
           </Suspense>
@@ -321,18 +325,18 @@ const mainJsx = ready ? (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerPro
     </div>
   )
 }
-function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
-  const depthBuffer = useDepthBuffer({ frames: 2  })
-  const spotlightRef = useRef(null)
-  // useHelper(spotlightRef, SpotLightHelper, 'cyan')
-  useFrame((state, delta) => {
-    spotlightRef.current.target.position.lerp(vec.set(position[0], position[1]-10, position[2]), 0.3)
-    spotlightRef.current.target.updateMatrixWorld()
-    // spotlightRef.current.target.update();
-    return true
-  })
-  return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={0} {...props}/>
-}
+// function FollowCharacterSpotlight({ vec = new Vector3(), position, ...props }){
+//   const depthBuffer = useDepthBuffer({ frames: 2  })
+//   const spotlightRef = useRef(null)
+//   // useHelper(spotlightRef, SpotLightHelper, 'cyan')
+//   useFrame((state, delta) => {
+//     spotlightRef.current.target.position.lerp(vec.set(position[0], position[1]-10, position[2]), 0.3)
+//     spotlightRef.current.target.updateMatrixWorld()
+//     // spotlightRef.current.target.update();
+//     return true
+//   })
+//   return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={0} {...props}/>
+// }
 
 function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
   useFrame(() => {
