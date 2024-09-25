@@ -143,14 +143,14 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
     width: 4,
     height: 4,
   }
-  const generatePlant = useCallback((spriteKey, regionKey, { src, scale, isSmall }, { spread = 128, ox = 0, oz = 0 }) => {
+  const generatePlant = useCallback((spriteKey, regionKey, { src, scale, isSmall }, { spreadX = 128, spreadZ = spreadX, ox = 0, oz = 0 }) => {
     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
-    const halfSpread = spread / 2
-    const z = Math.random() * spread - halfSpread - (oz * spread)
-
-    const x = Math.random() * spread - halfSpread - (ox * spread)
+    const halfSpreadX = spreadX / 2
+    const x = Math.random() * spreadX - halfSpreadX - (ox * spreadX)
+    const halfSpreadZ = spreadZ / 2
+    const z = Math.random() * spreadZ - halfSpreadZ - (oz * spreadZ)
     const y = isSmall ? -3 : 0
     const startFrame = Math.floor(Math.random() * 24) % 24
     const frame = startFrame
@@ -172,7 +172,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
 
   const colors = useMemo(() => {
     const colors = []
-    for (let i = 0; i < 128; i++) {
+    for (let i = 0; i < 64; i++) {
       colors.push(0x00ffff * Math.random() + 0x004400 + 0x220000)
     }
     return colors
@@ -290,7 +290,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: 35 }, (_, index) => {
+              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: Math.abs(Math.cos((newOx+ix)/(chunkEnd-chunkStart)*Math.PI*2)*32) }, (_, index) => {
                 const existingTree = spritesDataChunks[regionKey]?.[index]
                 // const sprite = spriteRefs.current[spriteData.key]
                 // sprite.visible = false
@@ -299,7 +299,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
                 const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
                 const spriteKey = regionKey + "_" + index + "_" + src
-                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), ox: newOx +ix, oz: newOz + iz })
+                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spreadX: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), spreadZ: (CELL_SIZE * MAPS.MAP_0.length * 1.5), ox: newOx +ix, oz: newOz + iz })
               })
             }
           }
