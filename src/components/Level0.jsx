@@ -169,11 +169,11 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
   }, [])
   const [[ox, oz], setOffset] = useState([0, 0])
 
-
+const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
   const colors = useMemo(() => {
     const colors = []
     for (let i = 0; i < 64; i++) {
-      colors.push(0x00ffff * Math.random() + 0x004400 + 0x220000)
+      colors.push(createColor())
     }
     return colors
   }, [])
@@ -195,7 +195,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
 
         chunks.push({
           key: `instance_${offsetX},${offsetZ}`,
-          color: colors[index % 128],
+          color: colors[index % colors.length],
           map: MAPS.MAP_0,
           position: [offsetX, 1, offsetZ] // Position based on the correct chunk offsets
         });
