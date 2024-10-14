@@ -4,8 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ecctrl 3D</title>
+    <style>
+      #loading-screen {
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        position: fixed;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
   </head>
   <body>
+    <div id="loading-screen"><h3>Loading...</h3></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
