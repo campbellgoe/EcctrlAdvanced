@@ -284,7 +284,7 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
         //   return generatePlant(index+""+src, { src, scale, isSmall }, { spread: 256, ox, oz})
         // }), [])
 
-
+        // TODO: think about how to optimise it out of a set state
         setSpritesData(spritesDataChunks => {
           const newSpriteDataChunks = { ...spritesDataChunks }
           for (let ix = chunkStart; ix < chunkEnd; ix++) {

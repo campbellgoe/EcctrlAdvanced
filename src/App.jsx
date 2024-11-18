@@ -286,7 +286,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                   setTimeout(() => {
                     const loadingEl =document.getElementById("loading-screen")
                     loadingEl.style.display = ready ? "none" : ""
-                  }, 500)
+                  }, 2500)
                 }, [ready])
   return (
     <div className="w-[100vw]">
