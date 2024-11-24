@@ -132,332 +132,332 @@ function Chunk({ map, position, color }) {
 }
 
 function Level0({ ecctrlRef, floorColor, onReady }) {
-  const wall = {
-    depth: 30,
-    width: 30,
-    height: 10,
-    thickness: 1
-  }
-  const box = {
-    depth: 4,
-    width: 4,
-    height: 4,
-  }
-  const generatePlant = useCallback((spriteKey, regionKey, { src, scale, isSmall }, { spreadX = 128, spreadZ = spreadX, ox = 0, oz = 0 }) => {
-    const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
-    const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
-    const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
-    const halfSpreadX = spreadX / 2
-    const x = Math.random() * spreadX - halfSpreadX - (ox * spreadX)
-    const halfSpreadZ = spreadZ / 2
-    const z = Math.random() * spreadZ - halfSpreadZ - (oz * spreadZ)
-    const y = isSmall ? -3 : 0
-    const startFrame = Math.floor(Math.random() * 24) % 24
-    const frame = startFrame
-    return {
-      src,
-      regionKey,
-      key: spriteKey,
-      scale,
-      //position
-      position: [x, y, z],
-      distance: 0,
-      posObject: new Vector3(),
-      startFrame,
-      frame
-    }
-  }, [])
-  const [[ox, oz], setOffset] = useState([0, 0])
+//   const wall = {
+//     depth: 30,
+//     width: 30,
+//     height: 10,
+//     thickness: 1
+//   }
+//   const box = {
+//     depth: 4,
+//     width: 4,
+//     height: 4,
+//   }
+//   const generatePlant = useCallback((spriteKey, regionKey, { src, scale, isSmall }, { spreadX = 128, spreadZ = spreadX, ox = 0, oz = 0 }) => {
+//     const numberOfCols = Math.floor((wall.depth * wall.thickness) / box.depth);
+//     const numberOfRows = Math.floor((wall.width * wall.thickness) / box.width);
+//     const numberOfLayers = Math.floor((wall.height * wall.thickness) / box.height);
+//     const halfSpreadX = spreadX / 2
+//     const x = Math.random() * spreadX - halfSpreadX - (ox * spreadX)
+//     const halfSpreadZ = spreadZ / 2
+//     const z = Math.random() * spreadZ - halfSpreadZ - (oz * spreadZ)
+//     const y = isSmall ? -3 : 0
+//     const startFrame = Math.floor(Math.random() * 24) % 24
+//     const frame = startFrame
+//     return {
+//       src,
+//       regionKey,
+//       key: spriteKey,
+//       scale,
+//       //position
+//       position: [x, y, z],
+//       distance: 0,
+//       posObject: new Vector3(),
+//       startFrame,
+//       frame
+//     }
+//   }, [])
+//   const [[ox, oz], setOffset] = useState([0, 0])
 
-const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
-  const colors = useMemo(() => {
-    const colors = []
-    for (let i = 0; i < 64; i++) {
-      colors.push(createColor())
-    }
-    return colors
-  }, [])
-  const chunks = useMemo(() => {
-    const chunkWidth = MAPS.MAP_0[0].length;
-    const chunkHeight = MAPS.MAP_0.length;
+// const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
+//   const colors = useMemo(() => {
+//     const colors = []
+//     for (let i = 0; i < 64; i++) {
+//       colors.push(createColor())
+//     }
+//     return colors
+//   }, [])
+//   const chunks = useMemo(() => {
+//     const chunkWidth = MAPS.MAP_0[0].length;
+//     const chunkHeight = MAPS.MAP_0.length;
 
-    let chunks = [];
-    const cSize = 1
-    let index = 0
-    for (let x = -2 + ox; x < 2 + ox; x++) {
-      for (let z = -2 + oz; z < 2 + oz; z++) {
-        // Horizontal distance between chunks
-        const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
-        // Vertical distance between chunks, with row staggering
-        const offsetZ =
-          (z * chunkHeight * cSize * 1.5 +
-            (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
+//     let chunks = [];
+//     const cSize = 1
+//     let index = 0
+//     for (let x = -2 + ox; x < 2 + ox; x++) {
+//       for (let z = -2 + oz; z < 2 + oz; z++) {
+//         // Horizontal distance between chunks
+//         const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
+//         // Vertical distance between chunks, with row staggering
+//         const offsetZ =
+//           (z * chunkHeight * cSize * 1.5 +
+//             (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
 
-        chunks.push({
-          key: `instance_${offsetX},${offsetZ}`,
-          color: colors[index % colors.length],
-          map: MAPS.MAP_0,
-          position: [offsetX, 1, offsetZ] // Position based on the correct chunk offsets
-        });
-        index++
-      }
-    }
-    return chunks;
-  }, [ox, oz]);
-  // const initialSpritesData2 = useMemo(() => {
-  //   const spritesData = {}
-  //   const cSize = 1
-  //   for (let x = -2 + ox; x < 2 + ox; x++) {
-  //     for (let z = -2 + oz; z < 2 + oz; z++) {
-  //       // Horizontal distance between chunks
-  //       const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
-  //       // Vertical distance between chunks, with row staggering
-  //       const offsetZ =
-  //         (z * chunkHeight * cSize * 1.5 +
-  //           (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
+//         chunks.push({
+//           key: `instance_${offsetX},${offsetZ}`,
+//           color: colors[index % colors.length],
+//           map: MAPS.MAP_0,
+//           position: [offsetX, 1, offsetZ] // Position based on the correct chunk offsets
+//         });
+//         index++
+//       }
+//     }
+//     return chunks;
+//   }, [ox, oz]);
+//   // const initialSpritesData2 = useMemo(() => {
+//   //   const spritesData = {}
+//   //   const cSize = 1
+//   //   for (let x = -2 + ox; x < 2 + ox; x++) {
+//   //     for (let z = -2 + oz; z < 2 + oz; z++) {
+//   //       // Horizontal distance between chunks
+//   //       const offsetX = x * chunkWidth * cSize * Math.sqrt(3); // Horizontal offset
+//   //       // Vertical distance between chunks, with row staggering
+//   //       const offsetZ =
+//   //         (z * chunkHeight * cSize * 1.5 +
+//   //           (x % 2 !== 0 ? (cSize * 1.5) * 2 : 0)); // Vertical offset with stagger
 
-  //       const spritesDataChunk = Array.from({ length: 35 }, (_, index) => {
-  //         const isSmall = Math.random() > 0.33
-  //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-  //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-  //         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: offsetX, oz: offsetZ })
-  //       })
-  //       spritesData[offsetX + "," + offsetZ] = spritesDataChunk
-  //     }
-  //   }
-  //   return spritesData
-  // }, [oz, ox])
-  const initialRegionKey = useMemo(() => 0 + "," + 0, [])
-  const [spritesData, setSpritesData] = useState({})
-  /*
-    [initialRegionKey]: (Array.from({ length: 35 }, (_, index) => {
-      const isSmall = Math.random() > 0.33
-      const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-      const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-      const spriteKey = initialRegionKey + "_" + index + "_" + src
-      return generatePlant(spriteKey, initialRegionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3) * 2), ox: 0 * 2, oz: 0 * 2 })
-    }))
-  })*/
-  // console.log('spritesDataFULL', spritesData)
+//   //       const spritesDataChunk = Array.from({ length: 35 }, (_, index) => {
+//   //         const isSmall = Math.random() > 0.33
+//   //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+//   //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+//   //         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: offsetX, oz: offsetZ })
+//   //       })
+//   //       spritesData[offsetX + "," + offsetZ] = spritesDataChunk
+//   //     }
+//   //   }
+//   //   return spritesData
+//   // }, [oz, ox])
+//   const initialRegionKey = useMemo(() => 0 + "," + 0, [])
+//   const [spritesData, setSpritesData] = useState({})
+//   /*
+//     [initialRegionKey]: (Array.from({ length: 35 }, (_, index) => {
+//       const isSmall = Math.random() > 0.33
+//       const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+//       const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+//       const spriteKey = initialRegionKey + "_" + index + "_" + src
+//       return generatePlant(spriteKey, initialRegionKey, { src, scale, isSmall }, { spread: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3) * 2), ox: 0 * 2, oz: 0 * 2 })
+//     }))
+//   })*/
+//   // console.log('spritesDataFULL', spritesData)
 
-  // const [distToSprite, setDistToSprite] = useState([0])
-  // const [spriteFrame, setSpriteFrame] = useState([0])
-  const posCamera = useMemo(() => new Vector3())
+//   // const [distToSprite, setDistToSprite] = useState([0])
+//   // const [spriteFrame, setSpriteFrame] = useState([0])
+//   const posCamera = useMemo(() => new Vector3())
 
-  const spriteRefs = useRef({})
-  // const imgRefs = useRef([])
-  // const camera = useThree(state => state.camera)
-  // const generatePlants = useCallback((iox, ioz) => {
-  //   setSpritesData(spritesDataChunks => {
-  //     console.log('sprites chunks')
-  //     return {
-  //       ...spritesDataChunks,
-  //       [iox + "," + ioz]: Array.from({ length: 35 }, (_, index) => {
-  //         const isSmall = Math.random() > 0.33
-  //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-  //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-  //         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: iox, oz: ioz })
-  //       })
-  //     }
-  //   })
-  // }, [])
-  const prevOx = useRef(0)
-  const prevOz = useRef(0)
-  useFrame((state) => {
-    if (ecctrlRef.current) {
-      let newOx = 0
-      let newOz = 0
-      try {
-        const { x, y, z } = ecctrlRef.current.translation()
-
-
-        // if has changed chunk
-        newOx = -Math.floor((x / CELL_SIZE / MAPS.MAP_0.length) / Math.sqrt(3))
-        newOz = -Math.floor((z / CELL_SIZE / MAPS.MAP_0.length) / 1.5)
-        setOffset([newOx, newOz])
-        // generatePlants(iox, ioz)
-        // changed chunk
-        // const initialSpritesData = useMemo(() => Array.from({ length: 100 }, (_, index) => {
-        //   const isSmall = Math.random() > 0.33
-        //   const scale = isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4
-        //   const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-        //   return generatePlant(index+""+src, { src, scale, isSmall }, { spread: 256, ox, oz})
-        // }), [])
-
-        // TODO: think about how to optimise it out of a set state
-        setSpritesData(spritesDataChunks => {
-          const newSpriteDataChunks = { ...spritesDataChunks }
-          for (let ix = chunkStart; ix < chunkEnd; ix++) {
-            for (let iz = chunkStart; iz < chunkEnd; iz++) {
-              const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: Math.abs(Math.cos((newOx+ix)/(chunkEnd-chunkStart)*Math.PI*2)*32) }, (_, index) => {
-                const existingTree = spritesDataChunks[regionKey]?.[index]
-                // const sprite = spriteRefs.current[spriteData.key]
-                // sprite.visible = false
-                if (existingTree) return existingTree
-                const isSmall = Math.random() > 0.33
-                const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-                const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-                const spriteKey = regionKey + "_" + index + "_" + src
-                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spreadX: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), spreadZ: (CELL_SIZE * MAPS.MAP_0.length * 1.5), ox: newOx +ix, oz: newOz + iz })
-              })
-            }
-          }
-
-          return newSpriteDataChunks
-
-        })
+//   const spriteRefs = useRef({})
+//   // const imgRefs = useRef([])
+//   // const camera = useThree(state => state.camera)
+//   // const generatePlants = useCallback((iox, ioz) => {
+//   //   setSpritesData(spritesDataChunks => {
+//   //     console.log('sprites chunks')
+//   //     return {
+//   //       ...spritesDataChunks,
+//   //       [iox + "," + ioz]: Array.from({ length: 35 }, (_, index) => {
+//   //         const isSmall = Math.random() > 0.33
+//   //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+//   //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+//   //         return generatePlant(index + "" + src, { src, scale, isSmall }, { spread: 256, ox: iox, oz: ioz })
+//   //       })
+//   //     }
+//   //   })
+//   // }, [])
+//   const prevOx = useRef(0)
+//   const prevOz = useRef(0)
+//   useFrame((state) => {
+//     if (ecctrlRef.current) {
+//       let newOx = 0
+//       let newOz = 0
+//       try {
+//         const { x, y, z } = ecctrlRef.current.translation()
 
 
-      } catch (err) {
-        console.error(err)
-      }
-      try {
+//         // if has changed chunk
+//         newOx = -Math.floor((x / CELL_SIZE / MAPS.MAP_0.length) / Math.sqrt(3))
+//         newOz = -Math.floor((z / CELL_SIZE / MAPS.MAP_0.length) / 1.5)
+//         setOffset([newOx, newOz])
+//         // generatePlants(iox, ioz)
+//         // changed chunk
+//         // const initialSpritesData = useMemo(() => Array.from({ length: 100 }, (_, index) => {
+//         //   const isSmall = Math.random() > 0.33
+//         //   const scale = isSmall ? 10 +Math.random()*2 : 14 + Math.random() * 4
+//         //   const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+//         //   return generatePlant(index+""+src, { src, scale, isSmall }, { spread: 256, ox, oz})
+//         // }), [])
+
+//         // TODO: think about how to optimise it out of a set state
+//         setSpritesData(spritesDataChunks => {
+//           const newSpriteDataChunks = { ...spritesDataChunks }
+//           for (let ix = chunkStart; ix < chunkEnd; ix++) {
+//             for (let iz = chunkStart; iz < chunkEnd; iz++) {
+//               const regionKey = (newOx + ix) + "," + (newOz + iz)
+//               newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: Math.abs(Math.cos((newOx+ix)/(chunkEnd-chunkStart)*Math.PI*2)*32) }, (_, index) => {
+//                 const existingTree = spritesDataChunks[regionKey]?.[index]
+//                 // const sprite = spriteRefs.current[spriteData.key]
+//                 // sprite.visible = false
+//                 if (existingTree) return existingTree
+//                 const isSmall = Math.random() > 0.33
+//                 const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+//                 const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+//                 const spriteKey = regionKey + "_" + index + "_" + src
+//                 return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spreadX: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), spreadZ: (CELL_SIZE * MAPS.MAP_0.length * 1.5), ox: newOx +ix, oz: newOz + iz })
+//               })
+//             }
+//           }
+
+//           return newSpriteDataChunks
+
+//         })
 
 
-        setSpritesData(spritesDataChunks => {
-          const newSpritesData = {}
-          for (let ix = chunkStart; ix < chunkEnd; ix++) {
-            for (let iz = chunkStart; iz < chunkEnd; iz++) {
-              const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpritesData[regionKey] = spritesDataChunks[regionKey].map((spriteData, i) => {
-              const sprite = spriteRefs.current[spriteData.key]
-              if (sprite) {
-                // // first calculate angle between camera and sprite
-                // // sprite is a drei Html component
-
-                sprite.getWorldPosition(spriteData.posObject);
+//       } catch (err) {
+//         console.error(err)
+//       }
+//       try {
 
 
+//         setSpritesData(spritesDataChunks => {
+//           const newSpritesData = {}
+//           for (let ix = chunkStart; ix < chunkEnd; ix++) {
+//             for (let iz = chunkStart; iz < chunkEnd; iz++) {
+//               const regionKey = (newOx + ix) + "," + (newOz + iz)
+//               newSpritesData[regionKey] = spritesDataChunks[regionKey].map((spriteData, i) => {
+//               const sprite = spriteRefs.current[spriteData.key]
+//               if (sprite) {
+//                 // // first calculate angle between camera and sprite
+//                 // // sprite is a drei Html component
 
-                state.camera.getWorldPosition(posCamera);
+//                 sprite.getWorldPosition(spriteData.posObject);
 
-                const xDist = posCamera.x - spriteData.posObject.x;
-                const zDist = posCamera.z - spriteData.posObject.z;
-                const dist = Math.sqrt(xDist * xDist + zDist * zDist)
-                // console.log('dist', dist)
-                const angleRadians = Math.atan2(zDist, xDist);
 
-                // const angleRadians = posSprite.angleTo(posCamera);
-                const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
-                let newFrame;
-                if (dist > 100) {
-                  newFrame = spriteData.startFrame
-                } else {
-                  newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
-                }
-                if (dist > 200) {
-                  sprite.visible = false
-                } else if (sprite.visible === false) {
-                  sprite.visible = true
-                }
 
-                // if(dist > 300) {
+//                 state.camera.getWorldPosition(posCamera);
 
-                // }
-                spriteData.frame = newFrame
-                spriteData.distance = dist
-                // let distanceFactor = dist / 200;
-                let alpha = 1 ;//- distanceFactor;
+//                 const xDist = posCamera.x - spriteData.posObject.x;
+//                 const zDist = posCamera.z - spriteData.posObject.z;
+//                 const dist = Math.sqrt(xDist * xDist + zDist * zDist)
+//                 // console.log('dist', dist)
+//                 const angleRadians = Math.atan2(zDist, xDist);
 
-                // Clamp alpha to be between 0 and 1
-                alpha = Math.max(0, Math.min(1, alpha));
+//                 // const angleRadians = posSprite.angleTo(posCamera);
+//                 const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
+//                 let newFrame;
+//                 if (dist > 100) {
+//                   newFrame = spriteData.startFrame
+//                 } else {
+//                   newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
+//                 }
+//                 if (dist > 200) {
+//                   sprite.visible = false
+//                 } else if (sprite.visible === false) {
+//                   sprite.visible = true
+//                 }
 
-                let distanceFactor = dist / 200;
-                distanceFactor = Math.max(0, Math.min(1, distanceFactor)); // Ensure it stays between 0 and 1
-                spriteData.color = 0xffffff;
-                // // Assuming spriteData.color is an RGB value like 0xRRGGBB
-                // let r = (spriteData.color >> 16) & 0xff;
-                // let g = (spriteData.color >> 8) & 0xff;
-                // let b = spriteData.color & 0xff;
-                // const blendAmount = 1 - distanceFactor
-                // // Darken the color by blending with black (0x000000)
-                // r = Math.floor(r * blendAmount);
-                // g = Math.floor(g * blendAmount);
-                // b = Math.floor(b * blendAmount);
+//                 // if(dist > 300) {
 
-                // // Combine the new RGB values back into a single color value
-                // spriteData.color = (r << 16) | (g << 8) | b;
-                // Assuming spriteData.color is an object with r, g, b, a properties or something similar
-                spriteData.alpha = alpha;
-                // sprite.userData = {
-                //   ...sprite.userData || {},
-                //   frame: newFrame,
-                //   distance: dist
-                // }
-              }
-              return spriteData
-            })
-          }
-        }
-        return newSpritesData
+//                 // }
+//                 spriteData.frame = newFrame
+//                 spriteData.distance = dist
+//                 // let distanceFactor = dist / 200;
+//                 let alpha = 1 ;//- distanceFactor;
+
+//                 // Clamp alpha to be between 0 and 1
+//                 alpha = Math.max(0, Math.min(1, alpha));
+
+//                 let distanceFactor = dist / 200;
+//                 distanceFactor = Math.max(0, Math.min(1, distanceFactor)); // Ensure it stays between 0 and 1
+//                 spriteData.color = 0xffffff;
+//                 // // Assuming spriteData.color is an RGB value like 0xRRGGBB
+//                 // let r = (spriteData.color >> 16) & 0xff;
+//                 // let g = (spriteData.color >> 8) & 0xff;
+//                 // let b = spriteData.color & 0xff;
+//                 // const blendAmount = 1 - distanceFactor
+//                 // // Darken the color by blending with black (0x000000)
+//                 // r = Math.floor(r * blendAmount);
+//                 // g = Math.floor(g * blendAmount);
+//                 // b = Math.floor(b * blendAmount);
+
+//                 // // Combine the new RGB values back into a single color value
+//                 // spriteData.color = (r << 16) | (g << 8) | b;
+//                 // Assuming spriteData.color is an object with r, g, b, a properties or something similar
+//                 spriteData.alpha = alpha;
+//                 // sprite.userData = {
+//                 //   ...sprite.userData || {},
+//                 //   frame: newFrame,
+//                 //   distance: dist
+//                 // }
+//               }
+//               return spriteData
+//             })
+//           }
+//         }
+//         return newSpritesData
 
           
-      })
+//       })
 
-        // const angle = Math.atan2(state.camera.position.x, state.camera.position.z)
-        // console.log('angle', angle)
-        // const frame = Math.floor((angle/(Math.PI*2))*24)%24
+//         // const angle = Math.atan2(state.camera.position.x, state.camera.position.z)
+//         // console.log('angle', angle)
+//         // const frame = Math.floor((angle/(Math.PI*2))*24)%24
 
 
 
-      } catch (err) {
-        console.error(err)
-      }
-    }
+//       } catch (err) {
+//         console.error(err)
+//       }
+//     }
 
-    return true
-  })
-  const [plants, setPlants] = useState([])
-  useEffect(() => {
-    const savePlantMaterials = async () => {
-      const materialSources = [{
-        src: '/images/BigBush/Monsterra_',
-        count: 24,
-        calculateScale: () => Math.random() * 4 + 14
-      }, {
-        src: '/images/SmallPlant/PalmSmall_',
-        count: 24,
-        calculateScale: () => Math.random() * 2 + 7
-      }]
-      const loader = new TextureLoader();
-      const plantsWithMaterials = await Promise.all(materialSources.map(async ({ src, count, calculateScale }) => {
-        const textureMaps = []
-        for (let i = 0; i < count; i++) {
-          // instantiate a loader
-          textureMaps.push((
-            new Promise((resolve, reject) => {
-              loader.load(src + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
-                resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
-              }, undefined, (err) => {
-                reject(err)
-                // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
-              })
-            })
-          ));
+//     return true
+//   })
+//   const [plants, setPlants] = useState([])
+//   useEffect(() => {
+//     const savePlantMaterials = async () => {
+//       const materialSources = [{
+//         src: '/images/BigBush/Monsterra_',
+//         count: 24,
+//         calculateScale: () => Math.random() * 4 + 14
+//       }, {
+//         src: '/images/SmallPlant/PalmSmall_',
+//         count: 24,
+//         calculateScale: () => Math.random() * 2 + 7
+//       }]
+//       const loader = new TextureLoader();
+//       const plantsWithMaterials = await Promise.all(materialSources.map(async ({ src, count, calculateScale }) => {
+//         const textureMaps = []
+//         for (let i = 0; i < count; i++) {
+//           // instantiate a loader
+//           textureMaps.push((
+//             new Promise((resolve, reject) => {
+//               loader.load(src + (i + 1).toString().padStart(4, '0') + '.png', (map) => {
+//                 resolve(new SpriteMaterial({ map: map, color: 0xffffff, visible: true, opacity: 1, depthWrite: true, alphaTest: 0.5, transparent: true }))
+//               }, undefined, (err) => {
+//                 reject(err)
+//                 // resolve(new SpriteMaterial({color: 0xff0000, visible: true, opacity: 1 ,depthWrite: true }))
+//               })
+//             })
+//           ));
 
-        }
-        const readyTextureMapsForPlant = await Promise.all(textureMaps)
+//         }
+//         const readyTextureMapsForPlant = await Promise.all(textureMaps)
 
-        return { src, textureMaps: readyTextureMapsForPlant, calculateScale }
-      }))
-      return plantsWithMaterials
+//         return { src, textureMaps: readyTextureMapsForPlant, calculateScale }
+//       }))
+//       return plantsWithMaterials
 
-    }
-    console.log('saving plant materials')
-    savePlantMaterials().then(plants => {
-      console.log('plants:', plants)
-      setPlants(plants)
-      onReady(plants)
-    })
-      .catch(err => {
-        console.error('error loading plant material', err)
-      })
-  }, [])
-  const regionKey = ox + "," + oz
+//     }
+//     console.log('saving plant materials')
+//     savePlantMaterials().then(plants => {
+//       console.log('plants:', plants)
+//       setPlants(plants)
+//       onReady(plants)
+//     })
+//       .catch(err => {
+//         console.error('error loading plant material', err)
+//       })
+//   }, [])
+  // const regionKey = ox + "," + oz
   return (
     <>
-      {Object.entries(spritesData).map(([value, regionKey]) => {
+      {/* {Object.entries(spritesData).map(([value, regionKey]) => {
         return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame, color, alpha}, i) => {
           return (
             <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
@@ -466,8 +466,8 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
               }
             }} distance={distance} position={position} frame={frame} dispose={null} color={color} alpha={alpha}/>)
         })
-      })}
-      <RigidBody colliders="trimesh"
+      })} */}
+      {/* <RigidBody colliders="trimesh"
         type="fixed"
         ccd
         mass={0}>
@@ -481,11 +481,11 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
             <meshPhongMaterial color={0x775511} />
           </mesh>
         </group>
-      </RigidBody>
-      {chunks.map((chunk, i) => (
+      </RigidBody> */}
+      {/* {chunks.map((chunk, i) => (
         <Chunk {...chunk} key={chunk.key} />
-      ))}
-      <axesHelper args={[50]} />
+      ))} */}
+      {/* <axesHelper args={[50]} /> */}
     </>
   );
 }

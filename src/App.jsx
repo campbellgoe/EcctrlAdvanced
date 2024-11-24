@@ -28,21 +28,21 @@ import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 // import clsx from 'clsx'
 import Level0, { CELL_SIZE, MAPS } from './components/Level0'
-function ParallaxLayer({ textureUrl, speed, depth }) {
+function ParallaxLayer({ textureUrl, speed, depth, x = 0, y = 0 }) {
   const layerRef = useRef();
   const [texture] = useLoader(TextureLoader, [textureUrl]);
-
   useFrame((state) => {
     if (layerRef.current) {
       layerRef.current.position.x = state.camera.position.x * speed;
+      layerRef.current.position.y = state.camera.position.y * speed;
       layerRef.current.position.z = depth;
     }
   });
 
   return (
-    <mesh ref={layerRef} position={[0, 0, depth]}>
+    <mesh ref={layerRef} position={[x, y, depth]}>
       <planeGeometry args={[50, 25]} />
-      <meshBasicMaterial map={texture} />
+      <meshBasicMaterial map={texture} alphaTest={0.5} depthWrite={true}/>
     </mesh>
   );
 }
@@ -70,11 +70,10 @@ const clock = useMemo(() => new Clock(), [])
   useFrame((state, delta) => {
     // Update player position by following the path
     try {
-      const t = (clock.getElapsedTime() % 5) / 5;
-      console.log(clock.getElapsedTime() , 5)
+      const t = (clock.getElapsedTime() % 64) / 64;
       const position = path.getPointAt(t);
       if (position && playerRef.current) {
-        playerRef.current.position.lerp(position, 0.1)
+        playerRef.current.position.lerp(position, 0.01)
       }
 
        // Update the animation frame of the sprite
@@ -100,22 +99,6 @@ const clock = useMemo(() => new Clock(), [])
   );
 }
 
-function CollidableEnvironment() {
-  const groundRef = useRef();
-
-  useFrame(() => {
-    // Create colliders dynamically based on ground shape
-    const vertices = [new Vector3(-10, -1, 0), new Vector3(10, -1, 0)];
-  });
-
-  return (
-    <mesh ref={groundRef} position={[0, -1, 0]}>
-      <boxGeometry args={[20, 1, 1]} />
-      <meshStandardMaterial color='green' />
-    </mesh>
-  );
-}
-
 const MyEnvironmentSphere = () => {
   const envSphereProps = useTexture({
     map: 'night.png',
@@ -128,7 +111,7 @@ function CameraFollow({ player }) {
   useFrame((state) => {
     if (player.current) {
       const playerPosition = player.current.position;
-      state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.1);
+      state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.01);
       state.camera.lookAt(playerPosition);
     }
   });
@@ -261,13 +244,13 @@ function App({ overrideLevel = null }) {
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
-    Value: null//(<Level0 
-    //   onReady={() => {
-    //     ephemeralDispatch({ type: 'SET_READY', ready: true })
-    //   }}
-    // introStartPosition={introStartPosition}
-    // floorColor={0xff9966} 
-    // ecctrlRef={ecctrlRef}/>)
+    Value: (<Level0 
+      onReady={() => {
+        ephemeralDispatch({ type: 'SET_READY', ready: true })
+      }}
+    introStartPosition={introStartPosition}
+    floorColor={0xff9966} 
+    ecctrlRef={ecctrlRef}/>)
   }
  }
  const levels = {
@@ -368,13 +351,16 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                 useEffect(() => {
                   setTimeout(() => {
                     const loadingEl =document.getElementById("loading-screen")
-                    loadingEl.style.display = ready ? "none" : ""
+                    loadingEl.style.display = "none"
                   }, 2500)
                 }, [ready])
   const curvedPath = useMemo(() => new CatmullRomCurve3([
-    new Vector3(-5, 0, 0),
-    new Vector3(0, 2, 0),
-    new Vector3(5, 0, 0),
+    new Vector3(-25, 0, 0),
+    new Vector3(0, 0, 0),
+    new Vector3(5, 5, 0),
+    new Vector3(10, 0, 0),
+    new Vector3(15, 5, 0),
+    new Vector3(25, 0, 0),
   ]), [])
   const playerRef = useRef();
   return (
@@ -412,7 +398,10 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                     <meshStandardMaterial map={bgTexture} />
                   </mesh>
                 </ParallaxLayer> */}
-                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-00-00.webp'} speed={0.1} depth={-5} />
+                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'} speed={0.1} depth={-15} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} speed={0.05} depth={-7.5} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} speed={0.05} depth={-7.5} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} speed={0.01} depth={-5} y={3} />
                 {/* <ParallaxLayer textureUrl={'/midground.png'} speed={0.3} depth={-3} /> */}
                 {/* <ParallaxLayer textureUrl={'/foreground.png'} speed={0.5} depth={-1} /> */}
 
@@ -421,7 +410,6 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                   <Physics timeStep="vary">
                     <Respawn minY={currentLevelData.minY} ecctrlRef={ecctrlRef} setPos={setPos} respawnPosition={currentLevelData.respawnPosition} />
                     <Player playerRef={playerRef} path={curvedPath} />
-                    <CollidableEnvironment />
                     {levels[level]}
                   </Physics>
                 </Suspense>}
