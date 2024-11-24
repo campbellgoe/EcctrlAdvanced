@@ -20,7 +20,7 @@ import { EphemeralAppProvider, useEphemeralAppContext } from '@/state/EphemeralS
 import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 
-import { BackSide, Vector3 , TextureLoader, CatmullRomCurve3 } from 'three'
+import { BackSide, Vector3 , TextureLoader, CatmullRomCurve3, Clock } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
 
@@ -41,7 +41,7 @@ function ParallaxLayer({ textureUrl, speed, depth }) {
 
   return (
     <mesh ref={layerRef} position={[0, 0, depth]}>
-      <planeGeometry args={[50, 50]} />
+      <planeGeometry args={[50, 25]} />
       <meshBasicMaterial map={texture} />
     </mesh>
   );
@@ -65,21 +65,22 @@ export default function AppMain({ overrideLevel = null }) {
 function Player({ playerRef, path }) {
   const [frame, setFrame] = useState(0);
   const [texture] = useLoader(TextureLoader, ['/images/player/rabbitwalkinganimation.webp']);
-
+const clock = useMemo(() => new Clock(), [])
   // Update the player movement following the path
   useFrame((state, delta) => {
     // Update player position by following the path
     try {
-      // const t = (state.clock.getElapsedTime() % path.length) / path.length;
-      // const position = path.getPointAt(t);
-      // if (position && playerRef.current) {
-      //   playerRef.current.position.copy(position);
-      // }
+      const t = (clock.getElapsedTime() % 5) / 5;
+      console.log(clock.getElapsedTime() , 5)
+      const position = path.getPointAt(t);
+      if (position && playerRef.current) {
+        playerRef.current.position.lerp(position, 0.1)
+      }
 
        // Update the animation frame of the sprite
       const totalFrames = 4; // Assuming 4 frames in the spritesheet (4x1 layout)
       setFrame((prev) => {
-        return prev + 1 * delta
+        return prev + 1 * delta * 3
       })
       if (playerRef.current) {
         const frameWidth = 1 / totalFrames;
@@ -260,13 +261,13 @@ function App({ overrideLevel = null }) {
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
-    Value: (<Level0 
-      onReady={() => {
-        ephemeralDispatch({ type: 'SET_READY', ready: true })
-      }}
-    introStartPosition={introStartPosition}
-    floorColor={0xff9966} 
-    ecctrlRef={ecctrlRef}/>)
+    Value: null//(<Level0 
+    //   onReady={() => {
+    //     ephemeralDispatch({ type: 'SET_READY', ready: true })
+    //   }}
+    // introStartPosition={introStartPosition}
+    // floorColor={0xff9966} 
+    // ecctrlRef={ecctrlRef}/>)
   }
  }
  const levels = {
