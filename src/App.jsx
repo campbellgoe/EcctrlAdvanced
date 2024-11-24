@@ -1,7 +1,7 @@
 // import all neccesary code for the App
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Physics, CuboidCollider } from '@react-three/rapier'
-import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box, useHelper, SpotLight, useDepthBuffer } from '@react-three/drei'
+import { Canvas, useFrame, useLoader} from '@react-three/fiber'
+import { Physics, useRapier } from '@react-three/rapier'
+import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
@@ -14,20 +14,38 @@ import { localStorageKey, PersistentAppProvider, usePersistentAppContext } from 
 import { EphemeralAppProvider, useEphemeralAppContext } from '@/state/EphemeralStateProvider'
 // import { useControls } from 'leva'
 
-import { isMobile } from 'react-device-detect';
+// import { isMobile } from 'react-device-detect';
 
 // import constants
 import { INTRO, NO_PLAYER, ECCTRL, ECCTRL_WITHOUT_KEYBOARD } from '@/consts.js'
 
 
-import { BackSide, MeshStandardMaterial, SpotLightHelper, Vector3 } from 'three'
+import { BackSide, Vector3 , TextureLoader, CatmullRomCurve3 } from 'three'
 
 import BaseCharacter from '@/components/BaseCharacter'
 
 import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
-import clsx from 'clsx'
+// import clsx from 'clsx'
 import Level0, { CELL_SIZE, MAPS } from './components/Level0'
+function ParallaxLayer({ textureUrl, speed, depth }) {
+  const layerRef = useRef();
+  const [texture] = useLoader(TextureLoader, [textureUrl]);
+
+  useFrame((state) => {
+    if (layerRef.current) {
+      layerRef.current.position.x = state.camera.position.x * speed;
+      layerRef.current.position.z = depth;
+    }
+  });
+
+  return (
+    <mesh ref={layerRef} position={[0, 0, depth]}>
+      <planeGeometry args={[50, 50]} />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  );
+}
 // wrap app in context for accessing persistent state such as level and selected character
 const errorBoundaryJsx = <div className="p-8">
 <h1 className="text-3xl text-red-950 bg-red-300">⚠️Something went wrong.</h1>
@@ -43,6 +61,60 @@ export default function AppMain({ overrideLevel = null }) {
   return <ErrorBoundary fallback={errorBoundaryJsx}><EphemeralAppProvider><PersistentAppProvider><App overrideLevel={overrideLevel}/></PersistentAppProvider></EphemeralAppProvider></ErrorBoundary>
 }
 
+// Player component using spritesheet animation
+function Player({ playerRef, path }) {
+  const [frame, setFrame] = useState(0);
+  const [texture] = useLoader(TextureLoader, ['/images/player/rabbitwalkinganimation.webp']);
+
+  // Update the player movement following the path
+  useFrame((state, delta) => {
+    // Update player position by following the path
+    try {
+      // const t = (state.clock.getElapsedTime() % path.length) / path.length;
+      // const position = path.getPointAt(t);
+      // if (position && playerRef.current) {
+      //   playerRef.current.position.copy(position);
+      // }
+
+       // Update the animation frame of the sprite
+      const totalFrames = 4; // Assuming 4 frames in the spritesheet (4x1 layout)
+      setFrame((prev) => {
+        return prev + 1 * delta
+      })
+      if (playerRef.current) {
+        const frameWidth = 1 / totalFrames;
+        const offsetX = (Math.floor(frame*1) % totalFrames) * frameWidth;
+        playerRef.current.material.map.offset.set(offsetX, 0);
+        playerRef.current.material.map.repeat.set(frameWidth, 1);
+      }
+    } catch(err){
+      console.error("AHH", err)
+    }
+  });
+
+  return (
+    <sprite ref={playerRef} scale={[0.5, 1, 1]}>
+      <spriteMaterial map={texture} />
+    </sprite>
+  );
+}
+
+function CollidableEnvironment() {
+  const groundRef = useRef();
+
+  useFrame(() => {
+    // Create colliders dynamically based on ground shape
+    const vertices = [new Vector3(-10, -1, 0), new Vector3(10, -1, 0)];
+  });
+
+  return (
+    <mesh ref={groundRef} position={[0, -1, 0]}>
+      <boxGeometry args={[20, 1, 1]} />
+      <meshStandardMaterial color='green' />
+    </mesh>
+  );
+}
+
 const MyEnvironmentSphere = () => {
   const envSphereProps = useTexture({
     map: 'night.png',
@@ -50,6 +122,16 @@ const MyEnvironmentSphere = () => {
   return <Sphere scale={700}>
     <meshBasicMaterial {...envSphereProps} side={BackSide} />
   </Sphere>
+}
+function CameraFollow({ player }) {
+  useFrame((state) => {
+    if (player.current) {
+      const playerPosition = player.current.position;
+      state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.1);
+      state.camera.lookAt(playerPosition);
+    }
+  });
+  return null;
 }
 export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
   // this is the main jsx without keyboard controls
@@ -288,6 +370,12 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                     loadingEl.style.display = ready ? "none" : ""
                   }, 2500)
                 }, [ready])
+  const curvedPath = useMemo(() => new CatmullRomCurve3([
+    new Vector3(-5, 0, 0),
+    new Vector3(0, 2, 0),
+    new Vector3(5, 0, 0),
+  ]), [])
+  const playerRef = useRef();
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -295,6 +383,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
           <Suspense fallback={loadingJsx}>
             {showJoystick && <EcctrlJoystick buttonNumber={0} ref={ecctrlJoystickRef} />}
             <Canvas
+              camera={{ position: [0, 5, 10], fov: 50 }}
               ref={ref}
               shadows
               flat
@@ -310,22 +399,37 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                 }
               }}
             >
-              {!inView && <DisableRender />}
-              <Perf position="top-left" minimal />
-              <Suspense fallback={<MyEnvironmentSphere />}>{<Environment background files="/night.hdr" />}</Suspense>
-              <LevelLightsAndExtras level={level} />
-              {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
-                <Physics timeStep="vary">
-                  <Respawn minY={currentLevelData.minY} ecctrlRef={ecctrlRef} setPos={setPos} respawnPosition={currentLevelData.respawnPosition} />
-                  {ecctrlJsx}
-                  {levels[level]}
-                </Physics>
-              </Suspense>}
-              {currentLevelData.type === NO_PLAYER && <Suspense fallback={null}>{levels[level]}</Suspense>}
-              {!tier && <MyEnvironmentSphere />}
-              {effectsJsx}
-              {/* <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} /> */}
-              <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} />
+              <Suspense fallback={null}>
+                {!inView && <DisableRender />}
+                <Perf position="top-left" minimal />
+                <Suspense fallback={<MyEnvironmentSphere />}>{<Environment background files="/night.hdr" />}</Suspense>
+                <LevelLightsAndExtras level={level} />
+                {/* Parallax Layers */}
+                {/* <ParallaxLayer factor={0.5} speed={0.1}>
+                  <mesh position={[0, 0, -5]}>
+                    <planeGeometry args={[50, 50]} />
+                    <meshStandardMaterial map={bgTexture} />
+                  </mesh>
+                </ParallaxLayer> */}
+                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-00-00.webp'} speed={0.1} depth={-5} />
+                {/* <ParallaxLayer textureUrl={'/midground.png'} speed={0.3} depth={-3} /> */}
+                {/* <ParallaxLayer textureUrl={'/foreground.png'} speed={0.5} depth={-1} /> */}
+
+                <CameraFollow player={playerRef} />
+                {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
+                  <Physics timeStep="vary">
+                    <Respawn minY={currentLevelData.minY} ecctrlRef={ecctrlRef} setPos={setPos} respawnPosition={currentLevelData.respawnPosition} />
+                    <Player playerRef={playerRef} path={curvedPath} />
+                    <CollidableEnvironment />
+                    {levels[level]}
+                  </Physics>
+                </Suspense>}
+                {currentLevelData.type === NO_PLAYER && <Suspense fallback={null}>{levels[level]}</Suspense>}
+                {!tier && <MyEnvironmentSphere />}
+                {effectsJsx}
+                {/* <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} /> */}
+                <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} />
+              </Suspense>
             </Canvas>
           </Suspense>
         </ErrorBoundary>
