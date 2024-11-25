@@ -1,7 +1,7 @@
 // import all neccesary code for the App
 import { Canvas, useFrame, useLoader} from '@react-three/fiber'
-import { Physics, useRapier } from '@react-three/rapier'
-import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU } from '@react-three/drei'
+import { Physics, CuboidCollider } from '@react-three/rapier'
+import { Environment, KeyboardControls, Sphere, useTexture, useDetectGPU, Box } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
 import { useRef, useState, Suspense, useEffect, useCallback, forwardRef, useMemo } from 'react'
 import Ecctrl, { EcctrlAnimation, EcctrlJoystick } from 'ecctrl'
@@ -65,16 +65,29 @@ export default function AppMain({ overrideLevel = null }) {
 function Player({ playerRef, path }) {
   const [frame, setFrame] = useState(0);
   const [texture] = useLoader(TextureLoader, ['/images/player/rabbitwalkinganimation.webp']);
-const clock = useMemo(() => new Clock(), [])
+// const clock = useMemo(() => new Clock(), [])
   // Update the player movement following the path
   useFrame((state, delta) => {
     // Update player position by following the path
     try {
-      const t = (clock.getElapsedTime() % 64) / 64;
-      const position = path.getPointAt(t);
-      if (position && playerRef.current) {
-        playerRef.current.position.lerp(position, 0.01)
-      }
+      // lerp player along curve
+      // const t = (clock.getElapsedTime() % 64) / 64;
+      // const position = path.getPointAt(t);
+      // if (position && playerRef.current) {
+      //   playerRef.current.position.lerp(position, 0.01)
+      // }
+
+    // Lerp sprite player to camera center
+const lookAtVector = new Vector3(0, 0, -1);
+
+// Transform the lookAtVector to world space using the camera's quaternion and position
+lookAtVector.applyQuaternion(state.camera.quaternion).add(state.camera.position);
+
+// Ensure the playerRef is valid before applying the lerp
+if (lookAtVector && playerRef.current) {
+    // Lerp the player sprite position towards the calculated vector
+    playerRef.current.position.lerp(lookAtVector, 0.01);
+}
 
        // Update the animation frame of the sprite
       const totalFrames = 4; // Assuming 4 frames in the spritesheet (4x1 layout)
@@ -94,7 +107,7 @@ const clock = useMemo(() => new Clock(), [])
 
   return (
     <sprite ref={playerRef} scale={[0.5, 1, 1]}>
-      <spriteMaterial map={texture} />
+      <spriteMaterial map={texture} alphaTest={0.5} depthWrite={true}/>
     </sprite>
   );
 }
@@ -111,19 +124,31 @@ function CameraFollow({ player }) {
   useFrame((state) => {
     if (player.current) {
       const playerPosition = player.current.position;
-      state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.01);
-      state.camera.lookAt(playerPosition);
+      // state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.01);
+      // state.camera.lookAt(playerPosition);
     }
   });
   return null;
 }
 export const EcctrlContainer = forwardRef(({ ecctrlProps, position, characterURL, animationSet, yDist, character}, ecctrlRef) => {
+  const xpos = useMemo(() => {
+    try { 
+    const pos = ecctrlRef.current?.translation()
+    return {
+      ...position[0] != pos.x ? { "position-x": position[0]} : {}, 
+      ...position[1] != pos.y ? { "position-y": position[1]} : {},
+      ...position[2] != pos.z ? { "position-z": position[2]} : {},
+    }
+    } catch(err){
+      return {}
+    }
+  }, [position])
   // this is the main jsx without keyboard controls
-return <Ecctrl dampingC={0.1} floatingDis={yDist * 2/*1.5*/} ref={ecctrlRef} autoBalance={false} animated position={[position[0],position[1]+1, position[2]]} jumpVel={9.4} maxVelLimit={10} camCollision={false} {...ecctrlProps}>
+return <Ecctrl ref={ecctrlRef} autoBalance={false} animated {...xpos} jumpVel={9.4} maxVelLimit={10} camCollision={false} {...ecctrlProps}>
   <EcctrlAnimation characterURL={characterURL} animationSet={animationSet}>
-    {/* <CuboidCollider args={[0.5, 1, 0.2]} mass={0} position-y={-yDist} />
-    <Box args={[0.5, 1,0.2]} position-y={-yDist} /> */}
-    <BaseCharacter position-y={-0.65 - yDist} position-z={-1} scale={1}/>
+    {/* <CuboidCollider args={[1, 2, 1]} mass={0} position-y={-yDist+1} position-z={-1} /> */}
+    {/* <Box args={[1, 2,1]} position-y={-yDist+1} position-z={-1} /> */}
+    <BaseCharacter position-y={-yDist} position-z={-1} scale={1}/>
   </EcctrlAnimation>
 </Ecctrl>
 })
@@ -301,22 +326,33 @@ function App({ overrideLevel = null }) {
   //     setLevel(lvl)
   //   }
   // }, [lvl])
-  const yDist = 0.35
+  const yDist = -0.15
+  const floatHeight = 0.3;
+  const capsuleRadius = 0.3
+  const capsuleHalfHeight = 0.35
+  const floatingDis = capsuleRadius + floatHeight
+  const followLightPos = { x: 25, y: 0, z: -0.5}
   const ecctrlProps = {
-    capsuleRadius: yDist,
-    floatHeight: yDist,
+    followLightPos,
+    capsuleRadius,
+    floatingDis,
+    floatHeight,
+    capsuleHalfHeight,
+    bodySensorSize: [capsuleHalfHeight / 2, capsuleRadius], // cylinder body sensor [halfHeight, radius]
+  bodySensorPosition: { x: 0, y: 0, z: capsuleRadius / 2 },
     // first person settings
     camCollision: false, // disable camera collision detect (useless in FP mode)
-  camInitDis:-0.01, // camera intial position
-  camMinDis:-0.01, // camera zoom in closest position
-  camFollowMult: 1000, // give a big number here, so the camera follows the target (character) instantly
-  camLerpMult: 1000, // give a big number here, so the camera lerp to the followCam position instantly
-  turnVelMultiplier: 1, // Turning speed same as moving speed
-  turnSpeed: 100, // give it big turning speed to prevent turning wait time
-  mode: "CameraBasedMovement",
+    // rayLength: 0.125,
+  // camInitDis:-0.01, // camera intial position
+  //  camMinDis:.1, // camera zoom in closest position
+  // camFollowMult: 1000, // give a big number here, so the camera follows the target (character) instantly
+  // camLerpMult: 1000, // give a big number here, so the camera lerp to the followCam position instantly
+  // turnVelMultiplier: 1, // Turning speed same as moving speed
+  // turnSpeed: 100, // give it big turning speed to prevent turning wait time
+  mode:"FixedCamera", //"FixedCamera",
   //   camInitDis: -5,
-  // camMaxDis: -50,
-  // camMinDis: -2,
+  camMaxDis: 25,
+   camMinDis: 2,
   // camZoomSpeed: 4,
   // camCollision: false
   }
@@ -410,6 +446,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                   <Physics timeStep="vary">
                     <Respawn minY={currentLevelData.minY} ecctrlRef={ecctrlRef} setPos={setPos} respawnPosition={currentLevelData.respawnPosition} />
                     <Player playerRef={playerRef} path={curvedPath} />
+                    {ecctrlJsx}
                     {levels[level]}
                   </Physics>
                 </Suspense>}
@@ -417,7 +454,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                 {!tier && <MyEnvironmentSphere />}
                 {effectsJsx}
                 {/* <FollowCharacterSpotlight position={[pos[0], pos[1]+4, pos[2]]} /> */}
-                <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} />
+                {/* <UpdatePositionWithCharacter setPos={setPos} ecctrlRef={ecctrlRef} /> */}
               </Suspense>
             </Canvas>
           </Suspense>
@@ -440,14 +477,14 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
 //   return <SpotLight ref={spotlightRef} castShadow position={[position[0], position[1]+0.15, position[2]]} color={0xffddff} penumbra={2} distance={6} angle={1} attenuation={5} anglePower={4} intensity={4*Math.PI} depthBuffer={depthBuffer} decay={0} {...props}/>
 // }
 
-function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
-  useFrame(() => {
-    try {
-      const { x, y, z } = ecctrlRef.current.translation()
-      if(Math.random()>0.9) setPos([x, y, z])
-    } catch(err){
+// function UpdatePositionWithCharacter({ ecctrlRef, setPos }){
+//   useFrame(() => {
+//     try {
+//       const { x, y, z } = ecctrlRef.current.translation()
+//       if(Math.random()>0.9) setPos([x, y, z])
+//     } catch(err){
 
-    }
-    return true
-  })
-}
+//     }
+//     return true
+//   })
+// }

@@ -467,21 +467,17 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
             }} distance={distance} position={position} frame={frame} dispose={null} color={color} alpha={alpha}/>)
         })
       })} */}
-      {/* <RigidBody colliders="trimesh"
+      <RigidBody colliders="trimesh"
         type="fixed"
         ccd
         mass={0}>
         <group dispose={null}>
-          <mesh receiveShadow castShadow>
-            <cylinderGeometry args={[12, 20, 12, 6]} />
-            <meshPhongMaterial color={0x775511} />
-          </mesh>
-          <mesh receiveShadow castShadow>
-            <cylinderGeometry args={[12, 12, 128, 6]} />
-            <meshPhongMaterial color={0x775511} />
+          <mesh position-y={-2} receiveShadow>
+            <boxGeometry args={[1000, 1, 1000]} />
+            <meshBasicMaterial transparent={true} opacity={0.5}/>
           </mesh>
         </group>
-      </RigidBody> */}
+      </RigidBody>
       {/* {chunks.map((chunk, i) => (
         <Chunk {...chunk} key={chunk.key} />
       ))} */}
