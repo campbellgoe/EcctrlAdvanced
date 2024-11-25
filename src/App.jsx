@@ -31,16 +31,17 @@ import Level0, { CELL_SIZE, MAPS } from './components/Level0'
 function ParallaxLayer({ textureUrl, speed, depth, x = 0, y = 0 }) {
   const layerRef = useRef();
   const [texture] = useLoader(TextureLoader, [textureUrl]);
-  // useFrame((state) => {
-  //   if (layerRef.current) {
-  //     layerRef.current.position.x = state.camera.position.x * speed;
-  //     layerRef.current.position.y = state.camera.position.y * speed;
-  //     layerRef.current.position.z = depth;
-  //   }
-  // });
+  useFrame((state) => {
+    if (layerRef.current) {
+      // Adjust positions for parallax effect, targeting +z
+      // layerRef.current.position.x = state.camera.position.x * speed;
+      // layerRef.current.position.y = state.camera.position.y * speed;
+      // layerRef.current.position.z = state.camera.position.z + depth;
+    }
+  });
 
   return (
-    <mesh ref={layerRef} position={[x, y, depth]}>
+    <mesh ref={layerRef} position={[x, y,depth]}>
       <planeGeometry args={[50, 25]} />
       <meshBasicMaterial map={texture} alphaTest={0.5} depthWrite={true}/>
     </mesh>
@@ -141,7 +142,8 @@ function CameraFollow({ pos, setCamPos, setCamTarget }) {
       // Ensure the playerRef is valid before applying the lerp
       if (lookAtVector) {
         
-        setCamTarget({ x: lookAtVector[0], y: lookAtVector[1], z: lookAtVector[2]})
+        // TODO: set camera target each time reach a new area or follow along x path
+        setCamTarget({ x: -10, y: lookAtVector[1], z: lookAtVector[2]})
         // state.camera.position.lerp(lookAtVector, wwwwwwwwwdddddddddWA0.01)
           // Lerp the player sprite position towards the calculated vector
           // playerRef.current.position.lerp(lookAtVector, 0.01);
@@ -375,7 +377,7 @@ function App({ overrideLevel = null }) {
   // camLerpMult: 1000, // give a big number here, so the camera lerp to the followCam position instantly
   // turnVelMultiplier: 1, // Turning speed same as moving speed
   // turnSpeed: 100, // give it big turning speed to prevent turning wait time
-  mode:"PointToMove", //"FixedCamera",
+  mode:"CameraBasedMovement", //"FixedCamera",
   //   camInitDis: -5,
   camMaxDis: 25,
   camFollowMult: 0,
