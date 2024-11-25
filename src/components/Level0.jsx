@@ -1,5 +1,6 @@
 import React, { useMemo, useRef,} from 'react';
 import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
+import { Model as CavernCollisionA } from "./CavernCollisionA"
 // import { useFrame } from '@react-three/fiber';
 // import { TextureLoader } from 'three/src/loaders/TextureLoader'
 // import { Vector3, SpriteMaterial } from 'three';
@@ -131,7 +132,7 @@ function Chunk({ map, position, color }) {
   );
 }
 
-function Level0({ ecctrlRef, floorColor, onReady }) {
+function Level0({ scenes, ecctrlRef, floorColor, onReady }) {
 //   const wall = {
 //     depth: 30,
 //     width: 30,
@@ -455,6 +456,12 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
 //       })
 //   }, [])
   // const regionKey = ox + "," + oz
+  const materialProps = {
+    opacity:0,
+    transparent: true,
+    alphaTest: 0.5,
+    depthWrite: true
+  }
   return (
     <>
       {/* {Object.entries(spritesData).map(([value, regionKey]) => {
@@ -476,6 +483,12 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
             <boxGeometry args={[1000, 1, 1000]} />
             <meshBasicMaterial transparent={true} opacity={0.5}/>
           </mesh>
+          {scenes.map((_, i) => {
+            return (
+              <CavernCollisionA position={[i*50, -5, 0]} rotation={[0, Math.PI, 0]}  materialProps={materialProps}/>
+            )
+          })}
+        
         </group>
       </RigidBody>
       {/* {chunks.map((chunk, i) => (

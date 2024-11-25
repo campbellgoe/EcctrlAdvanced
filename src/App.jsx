@@ -137,7 +137,7 @@ function CameraFollow({ pos, setCamPos, setCamTarget }) {
       const camPos = state.camera.position
       //setCamPos({ x: pos[0], y: camPos[1], z: camPos[2] - 5 })
       newCamPos.set(pos.x, camPos.y, camPos.z < 15 ? camPos.z+5 : camPos.z)
-      state.camera.position.lerp(newCamPos, 0.4)
+      state.camera.position.lerp(newCamPos, 0.1575)
       const lookAtVector = new Vector3(0, 0, -1);
 
       // Transform the lookAtVector to world space using the camera's quaternion and position
@@ -249,8 +249,8 @@ function App({ overrideLevel = null }) {
   const {MAP_0} = MAPS
   const introStartPosition = useMemo(() => {
      const y = 40
-     const x = -20
-     const z = -20
+     const x = 0
+     const z = 0
 
     return [
       x,y,z
@@ -291,11 +291,14 @@ function App({ overrideLevel = null }) {
 
   // intro level is used for multiple levels
   // here's the jsx to share for that
-  
+  const scenes = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => i)
+  }, [])
  const LEVELS = {
   [INTRO]: {
     Key: 'INTRO',
     Value: (<Level0 
+      scenes={scenes}
       onReady={() => {
         ephemeralDispatch({ type: 'SET_READY', ready: true })
       }}
@@ -441,6 +444,12 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
     }
     return vec
   })
+  const { scene: { position: scenePos }} = useMemo(() => ({
+    scene: {
+      position: new Vector3(0, 5, 0)
+    }
+  }), [])
+  
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -448,7 +457,7 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
           <Suspense fallback={loadingJsx}>
             {showJoystick && <EcctrlJoystick buttonNumber={0} ref={ecctrlJoystickRef} />}
             <Canvas
-              camera={{ position: [0, 5, 10], fov: 50 }}
+              camera={{ position: [0, 5, 15], fov: 50 }}
               ref={ref}
               shadows
               flat
@@ -476,28 +485,15 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                     <meshStandardMaterial map={bgTexture} />
                   </mesh>
                 </ParallaxLayer> */}
-                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} />
-
-                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={1} transparency={0.75}/>
-
-                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} x={50} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} x={50}/>
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} x={50}/>
-                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} x={50}/>
-
-                
-                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={51} transparency={0.75}/>
-
-                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} x={100} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} x={100}/>
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} x={100}/>
-                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} x={100}/>
-
-                
-                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={101} transparency={0.75}/>
+                {scenes.map((layer, index) => {
+                  return <>
+                  <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y + 2}} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y - 4.5}}/>
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y - 4.5}}/>
+                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y - 4.5}}/>
+                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={4} {...{ ...scenePos, x: scenePos.x + 1+index*50}} transparency={0.75}/>
+                </>
+                })}
 
                 {/* <ParallaxLayer textureUrl={'/midground.png'} speed={0.3} depth={-3} /> */}
                 {/* <ParallaxLayer textureUrl={'/foreground.png'} speed={0.5} depth={-1} /> */}
