@@ -31,13 +31,13 @@ import Level0, { CELL_SIZE, MAPS } from './components/Level0'
 function ParallaxLayer({ textureUrl, speed, depth, x = 0, y = 0 }) {
   const layerRef = useRef();
   const [texture] = useLoader(TextureLoader, [textureUrl]);
-  useFrame((state) => {
-    if (layerRef.current) {
-      layerRef.current.position.x = state.camera.position.x * speed;
-      layerRef.current.position.y = state.camera.position.y * speed;
-      layerRef.current.position.z = depth;
-    }
-  });
+  // useFrame((state) => {
+  //   if (layerRef.current) {
+  //     layerRef.current.position.x = state.camera.position.x * speed;
+  //     layerRef.current.position.y = state.camera.position.y * speed;
+  //     layerRef.current.position.z = depth;
+  //   }
+  // });
 
   return (
     <mesh ref={layerRef} position={[x, y, depth]}>
@@ -62,7 +62,7 @@ export default function AppMain({ overrideLevel = null }) {
 }
 
 // Player component using spritesheet animation
-function Player({ playerRef, path }) {
+function Player({ playerRef, path, ecctrlRef }) {
   const [frame, setFrame] = useState(0);
   const [texture] = useLoader(TextureLoader, ['/images/player/rabbitwalkinganimation.webp']);
 // const clock = useMemo(() => new Clock(), [])
@@ -78,16 +78,21 @@ function Player({ playerRef, path }) {
       // }
 
     // Lerp sprite player to camera center
-const lookAtVector = new Vector3(0, 0, -1);
+// const lookAtVector = new Vector3(0, 0, -1);
 
 // Transform the lookAtVector to world space using the camera's quaternion and position
-lookAtVector.applyQuaternion(state.camera.quaternion).add(state.camera.position);
+// lookAtVector.applyQuaternion(state.camera.quaternion).add(position);
+try {
+  const pos = ecctrlRef.current.translation()
+  // Ensure the playerRef is valid before applying the lerp
+  if (pos && playerRef.current) {
+      // Lerp the player sprite position towards the calculated vector
+      playerRef.current.position.lerp(pos, 0.015);
+  }
+} catch(err){
 
-// Ensure the playerRef is valid before applying the lerp
-if (lookAtVector && playerRef.current) {
-    // Lerp the player sprite position towards the calculated vector
-    playerRef.current.position.lerp(lookAtVector, 0.01);
 }
+
 
        // Update the animation frame of the sprite
       const totalFrames = 4; // Assuming 4 frames in the spritesheet (4x1 layout)
@@ -120,12 +125,27 @@ const MyEnvironmentSphere = () => {
     <meshBasicMaterial {...envSphereProps} side={BackSide} />
   </Sphere>
 }
-function CameraFollow({ player }) {
+function CameraFollow({ pos, setCamPos, setCamTarget }) {
   useFrame((state) => {
-    if (player.current) {
-      const playerPosition = player.current.position;
-      // state.camera.position.lerp(new Vector3(playerPosition.x, playerPosition.y + 2, playerPosition.z + 10), 0.01);
-      // state.camera.lookAt(playerPosition);
+    if (pos) {
+      // setCamPos({ x: pos.x, y: pos.y + 2, z: pos.z - 5 })
+      // setCamTarget(pos)
+      // state.camera.position.lerp(pos, 0.001)
+      state.camera.lookAt(pos);
+      setCamPos(state.camera.position)
+      const lookAtVector = new Vector3(0, 0, -1);
+
+      // Transform the lookAtVector to world space using the camera's quaternion and position
+      lookAtVector.applyQuaternion(state.camera.quaternion).add(state.camera.position);
+
+      // Ensure the playerRef is valid before applying the lerp
+      if (lookAtVector) {
+        
+        setCamTarget({ x: lookAtVector[0], y: lookAtVector[1], z: lookAtVector[2]})
+        // state.camera.position.lerp(lookAtVector, wwwwwwwwwdddddddddWA0.01)
+          // Lerp the player sprite position towards the calculated vector
+          // playerRef.current.position.lerp(lookAtVector, 0.01);
+      }
     }
   });
   return null;
@@ -255,7 +275,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: -10,
+      minY: -15,
       hasPointerLock: true,
     },
   }
@@ -332,7 +352,13 @@ function App({ overrideLevel = null }) {
   const capsuleHalfHeight = 0.35
   const floatingDis = capsuleRadius + floatHeight
   const followLightPos = { x: 25, y: 0, z: -0.5}
+  const disableFollowCam = true; // Disable follow camera feature
+  const [disableFollowCamPos, setCamPos] =  useState({ x: 0, y: 0, z: -5 }); // Camera position when the follow camera feature is disabled
+  const [disableFollowCamTarget, setCamTarget] =  useState({ x: 0, y: 0, z: 0 });
   const ecctrlProps = {
+    disableFollowCam,
+    disableFollowCamPos,
+    disableFollowCamTarget,
     followLightPos,
     capsuleRadius,
     floatingDis,
@@ -349,9 +375,10 @@ function App({ overrideLevel = null }) {
   // camLerpMult: 1000, // give a big number here, so the camera lerp to the followCam position instantly
   // turnVelMultiplier: 1, // Turning speed same as moving speed
   // turnSpeed: 100, // give it big turning speed to prevent turning wait time
-  mode:"FixedCamera", //"FixedCamera",
+  mode:"PointToMove", //"FixedCamera",
   //   camInitDis: -5,
   camMaxDis: 25,
+  camFollowMult: 0,
    camMinDis: 2,
   // camZoomSpeed: 4,
   // camCollision: false
@@ -399,6 +426,15 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
     new Vector3(25, 0, 0),
   ]), [])
   const playerRef = useRef();
+  const posi = useMemo(() => {
+    const vec = new Vector3()
+    try {
+      const pos = ecctrlRef.current.translation()
+      vec.set(pos.x, pos.y+4, pos.z+2)
+    } catch(err){
+    }
+    return vec
+  })
   return (
     <div className="w-[100vw]">
       <div style={{ width: "100vw", height: "100vh" }} className="fixed top-0">
@@ -441,11 +477,11 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                 {/* <ParallaxLayer textureUrl={'/midground.png'} speed={0.3} depth={-3} /> */}
                 {/* <ParallaxLayer textureUrl={'/foreground.png'} speed={0.5} depth={-1} /> */}
 
-                <CameraFollow player={playerRef} />
+                <CameraFollow pos={posi} setCamPos={setCamPos} setCamTarget={setCamTarget} />
                 {[ECCTRL, ECCTRL_WITHOUT_KEYBOARD].includes(currentLevelData.type) && <Suspense fallback={null}>
                   <Physics timeStep="vary">
                     <Respawn minY={currentLevelData.minY} ecctrlRef={ecctrlRef} setPos={setPos} respawnPosition={currentLevelData.respawnPosition} />
-                    <Player playerRef={playerRef} path={curvedPath} />
+                    <Player playerRef={playerRef} path={curvedPath} ecctrlRef={ecctrlRef}/>
                     {ecctrlJsx}
                     {levels[level]}
                   </Physics>

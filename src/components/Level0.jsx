@@ -472,7 +472,7 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
         ccd
         mass={0}>
         <group dispose={null}>
-          <mesh position-y={-2} receiveShadow>
+          <mesh position-y={-12} receiveShadow>
             <boxGeometry args={[1000, 1, 1000]} />
             <meshBasicMaterial transparent={true} opacity={0.5}/>
           </mesh>
