@@ -136,8 +136,8 @@ function CameraFollow({ pos, setCamPos, setCamTarget }) {
       state.camera.lookAt(pos);
       const camPos = state.camera.position
       //setCamPos({ x: pos[0], y: camPos[1], z: camPos[2] - 5 })
-      newCamPos.set(pos.x, camPos.y, camPos.z < 15 ? camPos.z+5 : camPos.z)
-      state.camera.position.lerp(newCamPos, 0.1575)
+      newCamPos.set(pos.x-5, camPos.y, camPos.z < 15 ? camPos.z+5 : camPos.z)
+      state.camera.position.lerp(newCamPos, 0.16)
       const lookAtVector = new Vector3(0, 0, -1);
 
       // Transform the lookAtVector to world space using the camera's quaternion and position
@@ -492,6 +492,10 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                 <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y - 4.5}}/>
                 <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} {...{ ...scenePos, x: scenePos.x + index*50, y: scenePos.y - 4.5}}/>
                 <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={4} {...{ ...scenePos, x: scenePos.x + 1+index*50}} transparency={0.75}/>
+                {/* <ParallaxLayer textureUrl={'/images/layers/crystal-a.webp'} depth={-8} {...{ ...scenePos, x: scenePos.x + index*50}} transparency={0.75}/>
+                <ParallaxLayer textureUrl={'/images/layers/crystal-b.webp'} depth={-10} {...{ ...scenePos, x: scenePos.x + index*50}} transparency={0.75}/> */}
+                <ParallaxLayer textureUrl={'/images/layers/stalagtite-a.webp'} depth={-3} {...{...scenePos, x: scenePos.x + index * 50, y: scenePos.y -2}} />
+                <ParallaxLayer textureUrl={'/images/layers/stalagtite-b.webp'} depth={-9} {...{...scenePos, x: scenePos.x + index * 50, y: scenePos.y - 2}} />
                 </>
                 })}
 

@@ -6,14 +6,14 @@ Command: npx gltfjsx@6.5.0 ./public/Demon.glb
 import React from 'react'
 import { useGraph } from '@react-three/fiber'
 import { useGLTF, useAnimations } from '@react-three/drei'
-import { SkeletonUtils } from 'three-stdlib'
+// import { SkeletonUtils } from 'three-stdlib'
 import { useBaseCharacter } from '../hooks/useBaseCharacter'
 
 export function Model(props) {
   const group = React.useRef()
   const { scene, animations } = useGLTF('/Demon.glb')
-  const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
-  const { nodes, materials } = useGraph(clone)
+  // const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
+  const { nodes, materials } = useGraph(scene)
   const animation = useAnimations(animations, group)
   for (const material in materials) {
     materials[material].metalness = -2
