@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef,} from 'react';
 import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
-import { useFrame } from '@react-three/fiber';
-import { TextureLoader } from 'three/src/loaders/TextureLoader'
-import { Vector3, SpriteMaterial } from 'three';
+// import { useFrame } from '@react-three/fiber';
+// import { TextureLoader } from 'three/src/loaders/TextureLoader'
+// import { Vector3, SpriteMaterial } from 'three';
 
 function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...props }) {
   const material = useMemo(() => {

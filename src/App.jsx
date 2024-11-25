@@ -28,7 +28,7 @@ import { DepthOfField, EffectComposer} from '@react-three/postprocessing'
 import { ErrorBoundary } from "react-error-boundary";
 // import clsx from 'clsx'
 import Level0, { CELL_SIZE, MAPS } from './components/Level0'
-function ParallaxLayer({ textureUrl, speed, depth, x = 0, y = 0 }) {
+function ParallaxLayer({ textureUrl, depth, x = 0, y = 0, transparency  = 1 }) {
   const layerRef = useRef();
   const [texture] = useLoader(TextureLoader, [textureUrl]);
   useFrame((state) => {
@@ -41,9 +41,9 @@ function ParallaxLayer({ textureUrl, speed, depth, x = 0, y = 0 }) {
   });
 
   return (
-    <mesh ref={layerRef} position={[x, y,depth]}>
+    <mesh ref={layerRef} position={[x, y,depth]} {...(transparency < 1 ? { alphaTest: 0.5, depthWrite: true } : {})}>
       <planeGeometry args={[50, 25]} />
-      <meshBasicMaterial map={texture} alphaTest={0.5} depthWrite={true}/>
+      <meshBasicMaterial map={texture} alphaTest={0.5} depthWrite={true} {...(transparency < 1 ? { transparent: true, opacity: transparency } : {})}/>
     </mesh>
   );
 }
@@ -127,13 +127,17 @@ const MyEnvironmentSphere = () => {
   </Sphere>
 }
 function CameraFollow({ pos, setCamPos, setCamTarget }) {
+  const newCamPos = useMemo(() => new Vector3(), [])
   useFrame((state) => {
     if (pos) {
       // setCamPos({ x: pos.x, y: pos.y + 2, z: pos.z - 5 })
       // setCamTarget(pos)
       // state.camera.position.lerp(pos, 0.001)
       state.camera.lookAt(pos);
-      setCamPos(state.camera.position)
+      const camPos = state.camera.position
+      //setCamPos({ x: pos[0], y: camPos[1], z: camPos[2] - 5 })
+      newCamPos.set(pos.x, camPos.y, camPos.z < 15 ? camPos.z+5 : camPos.z)
+      state.camera.position.lerp(newCamPos, 0.4)
       const lookAtVector = new Vector3(0, 0, -1);
 
       // Transform the lookAtVector to world space using the camera's quaternion and position
@@ -277,7 +281,7 @@ function App({ overrideLevel = null }) {
       // uses introStartPosition or the player position from the previous level
       position: calculatePosition(introStartPosition),
       respawnPosition: introStartPosition,
-      minY: -15,
+      minY: -12.01,
       hasPointerLock: true,
     },
   }
@@ -472,10 +476,29 @@ const mainJsx = (<EcctrlContainer ref={ecctrlRef} {...ecctrlContainerProps} />)
                     <meshStandardMaterial map={bgTexture} />
                   </mesh>
                 </ParallaxLayer> */}
-                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'} speed={0.1} depth={-15} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} speed={0.05} depth={-7.5} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} speed={0.05} depth={-7.5} y={3} />
-                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} speed={0.01} depth={-5} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} />
+                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} />
+
+                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={1} transparency={0.75}/>
+
+                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} x={50} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} x={50}/>
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} x={50}/>
+                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} x={50}/>
+
+                
+                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={51} transparency={0.75}/>
+
+                <ParallaxLayer textureUrl={'/images/layers/bg-cavern-a.webp'}  depth={-15} y={3} x={100} />
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-left.webp'} depth={-6.5} y={3} x={100}/>
+                <ParallaxLayer textureUrl={'/images/layers/mg-cavern-right.webp'} depth={-7.5} y={3} x={100}/>
+                <ParallaxLayer textureUrl={'/images/layers/fg-cavern.webp'} depth={-5} y={3} x={100}/>
+
+                
+                <ParallaxLayer textureUrl={'/images/layers/crystal-big-a.webp'} depth={-2.5} y={3} x={101} transparency={0.75}/>
+
                 {/* <ParallaxLayer textureUrl={'/midground.png'} speed={0.3} depth={-3} /> */}
                 {/* <ParallaxLayer textureUrl={'/foreground.png'} speed={0.5} depth={-1} /> */}
 
