@@ -3,7 +3,13 @@ import { InstancedRigidBodies, RigidBody } from '@react-three/rapier';
 import { useFrame } from '@react-three/fiber';
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import { Vector3, SpriteMaterial } from 'three';
-
+const useRefState = (initialState) => {
+  const ref = useRef(initialState)
+  const setState = (newState) => {
+    ref.current = typeof newState === 'function' ? newState(ref.current) : newState
+  }
+  return [ref, setState]
+}
 function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...props }) {
   const material = useMemo(() => {
     return plants.find(({ src }) => src === plant)?.textureMaps[frame] || null
@@ -74,12 +80,10 @@ const chunkStart = -2
 const chunkEnd = 2
 export const MAPS = {
   MAP_0: [
-    [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1]
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1],
+    
   ]
 };
 
@@ -167,7 +171,8 @@ function Level0({ ecctrlRef, floorColor, onReady }) {
       frame
     }
   }, [])
-  const [[ox, oz], setOffset] = useState([0, 0])
+  const offset = useRef([0, 0])
+  const [ox, oz] = offset.current
 
 const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
   const colors = useMemo(() => {
@@ -228,7 +233,7 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
   //   return spritesData
   // }, [oz, ox])
   const initialRegionKey = useMemo(() => 0 + "," + 0, [])
-  const [spritesData, setSpritesData] = useState({})
+  const spritesData = useRef({})
   /*
     [initialRegionKey]: (Array.from({ length: 35 }, (_, index) => {
       const isSmall = Math.random() > 0.33
@@ -263,6 +268,16 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
   // }, [])
   const prevOx = useRef(0)
   const prevOz = useRef(0)
+  
+  const [updateId, setUpdateId] = useState(0)
+  const setSpritesData = (newSpritesData) => {
+    const prev = spritesData.current
+    const curr = typeof newSpritesData == 'function' ? newSpritesData(spritesData.current) : newSpritesData
+    if(prev !== curr){
+      spritesData.current = curr
+      setUpdateId(Math.random())
+    }
+  }
   useFrame((state) => {
     if (ecctrlRef.current) {
       let newOx = 0
@@ -274,7 +289,7 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
         // if has changed chunk
         newOx = -Math.floor((x / CELL_SIZE / MAPS.MAP_0.length) / Math.sqrt(3))
         newOz = -Math.floor((z / CELL_SIZE / MAPS.MAP_0.length) / 1.5)
-        setOffset([newOx, newOz])
+        offset.current = [newOx, newOz]
         // generatePlants(iox, ioz)
         // changed chunk
         // const initialSpritesData = useMemo(() => Array.from({ length: 100 }, (_, index) => {
@@ -285,28 +300,28 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
         // }), [])
 
         // TODO: think about how to optimise it out of a set state
-        setSpritesData(spritesDataChunks => {
-          const newSpriteDataChunks = { ...spritesDataChunks }
-          for (let ix = chunkStart; ix < chunkEnd; ix++) {
-            for (let iz = chunkStart; iz < chunkEnd; iz++) {
-              const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpriteDataChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: Math.abs(Math.cos((newOx+ix)/(chunkEnd-chunkStart)*Math.PI*2)*32) }, (_, index) => {
-                const existingTree = spritesDataChunks[regionKey]?.[index]
-                // const sprite = spriteRefs.current[spriteData.key]
-                // sprite.visible = false
-                if (existingTree) return existingTree
-                const isSmall = Math.random() > 0.33
-                const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
-                const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
-                const spriteKey = regionKey + "_" + index + "_" + src
-                return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spreadX: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), spreadZ: (CELL_SIZE * MAPS.MAP_0.length * 1.5), ox: newOx +ix, oz: newOz + iz })
-              })
-            }
-          }
+        // setSpritesData(spritesDataChunks => {
+        //   const newSChunks = { ...spritesDataChunks }
+        //   for (let ix = chunkStart; ix < chunkEnd; ix++) {
+        //     for (let iz = chunkStart; iz < chunkEnd; iz++) {
+        //       const regionKey = (newOx + ix) + "," + (newOz + iz)
+        //       newSChunks[regionKey] = spritesDataChunks[regionKey] || Array.from({ length: Math.abs(Math.cos((newOx+ix)/(chunkEnd-chunkStart)*Math.PI*2)*32) }, (_, index) => {
+        //         const existingTree = spritesDataChunks[regionKey]?.[index]
+        //         // const sprite = spriteRefs.current[s.key]
+        //         // sprite.visible = false
+        //         if (existingTree) return existingTree
+        //         const isSmall = Math.random() > 0.33
+        //         const scale = isSmall ? 10 + Math.random() * 2 : 14 + Math.random() * 4
+        //         const src = isSmall ? '/images/SmallPlant/PalmSmall_' : '/images/BigBush/Monsterra_'
+        //         const spriteKey = regionKey + "_" + index + "_" + src
+        //         return generatePlant(spriteKey, regionKey, { src, scale, isSmall }, { spreadX: (CELL_SIZE * MAPS.MAP_0.length * Math.sqrt(3)), spreadZ: (CELL_SIZE * MAPS.MAP_0.length * 1.5), ox: newOx +ix, oz: newOz + iz })
+        //       })
+        //     }
+        //   }
 
-          return newSpriteDataChunks
+        //   return newSChunks
 
-        })
+        // })
 
 
       } catch (err) {
@@ -320,20 +335,20 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
           for (let ix = chunkStart; ix < chunkEnd; ix++) {
             for (let iz = chunkStart; iz < chunkEnd; iz++) {
               const regionKey = (newOx + ix) + "," + (newOz + iz)
-              newSpritesData[regionKey] = spritesDataChunks[regionKey].map((spriteData, i) => {
-              const sprite = spriteRefs.current[spriteData.key]
+              newSpritesData[regionKey] = spritesDataChunks[regionKey].map((s, i) => {
+              const sprite = spriteRefs.current[s.key]
               if (sprite) {
                 // // first calculate angle between camera and sprite
                 // // sprite is a drei Html component
 
-                sprite.getWorldPosition(spriteData.posObject);
+                sprite.getWorldPosition(s.posObject);
 
 
 
                 state.camera.getWorldPosition(posCamera);
 
-                const xDist = posCamera.x - spriteData.posObject.x;
-                const zDist = posCamera.z - spriteData.posObject.z;
+                const xDist = posCamera.x - s.posObject.x;
+                const zDist = posCamera.z - s.posObject.z;
                 const dist = Math.sqrt(xDist * xDist + zDist * zDist)
                 // console.log('dist', dist)
                 const angleRadians = Math.atan2(zDist, xDist);
@@ -342,9 +357,9 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
                 const angle = angleRadians//Math.atan2(state.camera.position.x - sprite.position.x, state.camera.position.z - sprite.position.z)
                 let newFrame;
                 if (dist > 100) {
-                  newFrame = spriteData.startFrame
+                  newFrame = s.startFrame
                 } else {
-                  newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + spriteData.startFrame) % 24
+                  newFrame = Math.floor((-angle / (Math.PI * 2) + 0.5) * 24 + s.startFrame) % 24
                 }
                 if (dist > 200) {
                   sprite.visible = false
@@ -355,8 +370,8 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
                 // if(dist > 300) {
 
                 // }
-                spriteData.frame = newFrame
-                spriteData.distance = dist
+                s.frame = newFrame
+                s.distance = dist
                 // let distanceFactor = dist / 200;
                 let alpha = 1 ;//- distanceFactor;
 
@@ -365,11 +380,11 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
 
                 let distanceFactor = dist / 200;
                 distanceFactor = Math.max(0, Math.min(1, distanceFactor)); // Ensure it stays between 0 and 1
-                spriteData.color = 0xffffff;
-                // // Assuming spriteData.color is an RGB value like 0xRRGGBB
-                // let r = (spriteData.color >> 16) & 0xff;
-                // let g = (spriteData.color >> 8) & 0xff;
-                // let b = spriteData.color & 0xff;
+                s.color = 0xffffff;
+                // // Assuming s.color is an RGB value like 0xRRGGBB
+                // let r = (s.color >> 16) & 0xff;
+                // let g = (s.color >> 8) & 0xff;
+                // let b = s.color & 0xff;
                 // const blendAmount = 1 - distanceFactor
                 // // Darken the color by blending with black (0x000000)
                 // r = Math.floor(r * blendAmount);
@@ -377,16 +392,16 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
                 // b = Math.floor(b * blendAmount);
 
                 // // Combine the new RGB values back into a single color value
-                // spriteData.color = (r << 16) | (g << 8) | b;
-                // Assuming spriteData.color is an object with r, g, b, a properties or something similar
-                spriteData.alpha = alpha;
+                // s.color = (r << 16) | (g << 8) | b;
+                // Assuming s.color is an object with r, g, b, a properties or something similar
+                s.alpha = alpha;
                 // sprite.userData = {
                 //   ...sprite.userData || {},
                 //   frame: newFrame,
                 //   distance: dist
                 // }
               }
-              return spriteData
+              return s
             })
           }
         }
@@ -455,9 +470,10 @@ const createColor = () => 0x00ffff * Math.random() + 0x004400 + 0x220000
       })
   }, [])
   const regionKey = ox + "," + oz
+  const spritesDataRendered = useMemo(() => spritesData.current, [updateId])
   return (
     <>
-      {Object.entries(spritesData).map(([value, regionKey]) => {
+      {Object.entries(spritesDataRendered).map(([value, regionKey]) => {
         return regionKey.map(({ key: spriteKey, src, scale, position, distance, frame, color, alpha}, i) => {
           return (
             <Sprite key={spriteKey} scale={scale} plants={plants} plant={src} spriteRef={node => {
