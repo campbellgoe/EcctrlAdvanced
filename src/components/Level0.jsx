@@ -19,7 +19,7 @@ function Sprite({ spriteRef, plants, plant, frame, distance, color, alpha, ...pr
   // const [hidden, setOcclude] = useState() 
   return (
     <>
-      {(!!plants.length) && <><sprite ref={spriteRef} {...props} material={material} visible={true} dispose={null}>
+      {(!!plants.length) && <><sprite ref={spriteRef} {...props} material={material} visible={true}>
         <spriteMaterial attach="material" map={material.map} color={color} opacity={typeof alpha == 'number' ? alpha : 1}/>
       </sprite>
         {/* <Html as='div' sprite transform occlude
@@ -61,7 +61,6 @@ function InstancedLevel({ floorColor, instances, count, cellSize }) {
       <instancedMesh
         ref={ref}
         args={[null, null, count, false, true, false]}
-        dispose={null}
         onClick={(e) => { }}
         receiveShadow
         frustumCulled={false}
